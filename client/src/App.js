@@ -10,15 +10,32 @@ function App() {
 		const payload = {
 			language,
 			code,
+			testInput,
 		};
 		const url = "http://localhost:5000/run";
-		const { data } = await axios.post(url, payload);
-
-		setOutput(data.output);
+		try {
+			const { data } = await axios.post(url, payload);
+			setOutput(data.output);
+		} catch ({ response }) {
+			if (response) {
+				const error = response.data.err.stderr;
+				setOutput(error);
+			} else {
+				setOutput("Error connecting with the Server!");
+			}
+		}
 	};
 	return (
 		<div className="App">
 			<h1>Leetcode Ide</h1>
+			<div>
+				<label>Language :</label>
+				<select onChange={(e) => setLanguage(e.target.value)} value={language}>
+					<option value="cpp">C++</option>
+					<option value="py">Python</option>
+					<option value="js">JavaScript</option>
+				</select>
+			</div>
 			<div>
 				<textarea
 					name=""
@@ -35,7 +52,9 @@ function App() {
 					id=""
 					cols="30"
 					rows="10"
-					placeholder="Test case"></textarea>
+					placeholder="Test case"
+					value={testInput}
+					onChange={(e) => setTestInput(e.target.value)}></textarea>
 			</div>
 			<button onClick={handleSubmit}>Submit</button>
 			<p>{output}</p>

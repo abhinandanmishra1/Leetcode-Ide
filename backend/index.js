@@ -12,16 +12,16 @@ app.get("/", (req, res) => {
 });
 
 app.post("/run", async (req, res) => {
-	const { language = "cpp", code } = req.body;
+	const { language, code, testInput } = req.body;
 	if (code === undefined) {
 		return res.status(400).json({ success: false, error: "Empty code Body" });
 	}
-	// generate a cpp file from the code
+	// generate a "code file" from the code
 	// then compile that cpp file
 	// get output
 	try {
 		const filePath = await generateFile(language, code);
-		const output = await executeCode(filePath);
+		const output = await executeCode(filePath, language);
 		return res.json({ filePath, output });
 	} catch (err) {
 		res.status(500).json({ err });
