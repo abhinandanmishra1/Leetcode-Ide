@@ -2,10 +2,20 @@ import "./App.css";
 import React, { useState } from "react";
 import axios from "axios";
 function App() {
-	const [code, setCode] = useState("");
+	const cppBoiler = `#include<bits/stdc++.h>
+using namespace std;
+
+int main(){
+	cout<<"Hello World!"<<endl;
+	return 0;
+}
+	`;
+	const pyBoiler = `print("Hello World!")`;
+	const jsBoiler = `console.log("Hello World");`;
+	const [code, setCode] = useState(cppBoiler);
 	const [output, setOutput] = useState("");
 	const [language, setLanguage] = useState("cpp");
-	const [testInput, setTestInput] = useState("cpp");
+	const [testInput, setTestInput] = useState("");
 	const handleSubmit = async () => {
 		const payload = {
 			language,
@@ -16,8 +26,11 @@ function App() {
 		try {
 			const { data } = await axios.post(url, payload);
 			setOutput(data.output);
+			console.log(data.output);
 		} catch ({ response }) {
+			console.log("some error");
 			if (response) {
+				console.log("first ");
 				const error = response.data.err.stderr;
 				setOutput(error);
 			} else {
@@ -30,7 +43,18 @@ function App() {
 			<h1>Leetcode Ide</h1>
 			<div>
 				<label>Language :</label>
-				<select onChange={(e) => setLanguage(e.target.value)} value={language}>
+				<select
+					onChange={(e) => {
+						setLanguage(e.target.value);
+						const boiler =
+							e.target.value === "cpp"
+								? cppBoiler
+								: e.target.value === "py"
+								? pyBoiler
+								: jsBoiler;
+						setCode(boiler);
+					}}
+					value={language}>
 					<option value="cpp">C++</option>
 					<option value="py">Python</option>
 					<option value="js">JavaScript</option>

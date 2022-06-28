@@ -1,5 +1,5 @@
 const express = require("express");
-const { generateFile } = require("./generateCodeFile");
+const { generateCodeFile, generateInputFile } = require("./generateCodeFile");
 const { executeCode } = require("./executeCodeFile");
 const cors = require("cors");
 
@@ -20,8 +20,10 @@ app.post("/run", async (req, res) => {
 	// then compile that cpp file
 	// get output
 	try {
-		const filePath = await generateFile(language, code);
-		const output = await executeCode(filePath, language);
+		const codeFilePath = await generateCodeFile(language, code);
+		const inputFilePath = await generateInputFile(testInput);
+		const output = await executeCode(codeFilePath, language, inputFilePath);
+		console.log("this is output", output);
 		return res.json({ filePath, output });
 	} catch (err) {
 		res.status(500).json({ err });

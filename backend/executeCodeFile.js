@@ -11,7 +11,8 @@ const executeCpp = (filePath) => {
 	const outputPath = path.join(outputDir, `${jobId}.out`);
 	return new Promise((resolve, reject) => {
 		exec(
-			`g++ ${filePath} -o ${outputPath} && cd ${outputDir} && ${jobId}.out`,
+			`g++ ${filePath} -o ${outputPath} && cd ${outputDir} && ${jobId}.out` +
+				" < input.txt",
 			(error, stdout, stderr) => {
 				error && reject({ error, stderr });
 				stderr && reject(stderr);
@@ -21,9 +22,9 @@ const executeCpp = (filePath) => {
 	});
 };
 
-const executePython = (filePath) => {
+const executePython = (filePath, inputFilePath) => {
 	return new Promise((resolve, reject) => {
-		exec(`python ${filePath}`, (error, stdout, stderr) => {
+		exec(`< ${inputFilePath} python ${filePath}`, (error, stdout, stderr) => {
 			error && reject({ error, stderr });
 			stderr && reject(stderr);
 			resolve(stdout);
@@ -40,13 +41,14 @@ const executeJavascript = (filePath) => {
 		});
 	});
 };
-const executeCode = (filePath, language) => {
+const executeCode = (codeFilePath, language, inputFilePath) => {
+	console.log("This is path", codeFilePath);
 	if (language === "cpp") {
-		return executeCpp(filePath);
+		return executeCpp(codeFilePath);
 	} else if (language === "py") {
-		return executePython(filePath);
+		return executePython(codeFilePath, inputFilePath);
 	} else if (language === "js") {
-		return executeJavascript(filePath);
+		return executeJavascript(codeFilePath);
 	}
 };
 
