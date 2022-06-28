@@ -24,7 +24,7 @@ app.post("/run", async (req, res) => {
 		const inputFilePath = await generateInputFile(testInput);
 		const output = await executeCode(codeFilePath, language, inputFilePath);
 		console.log("this is output", output);
-		return res.json({ filePath, output });
+		return res.json({ output });
 	} catch (err) {
 		res.status(500).json({ err });
 	}
