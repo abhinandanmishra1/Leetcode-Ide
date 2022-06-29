@@ -10,7 +10,10 @@ import { cppBoiler } from "./boilerCodes/boilerPlate";
 function App() {
 	const [code, setCode] = useState(cppBoiler);
 	const [output, setOutput] = useState("");
-	const [language, setLanguage] = useState("cpp");
+	const [language, setLanguage] = useState({
+		label: "C++",
+		value: "cpp",
+	});
 	const [testInput, setTestInput] = useState("");
 	const [theme, setTheme] = useState("cobalt");
 	const handleSubmit = async () => {
@@ -42,6 +45,8 @@ function App() {
 						setLanguage={setLanguage}
 						language={language}
 						setCode={setCode}
+						setTheme={setTheme}
+						theme={theme}
 					/>
 					<div>
 						<CodeEditor

@@ -1,25 +1,62 @@
 import React from "react";
 import { cppBoiler, jsBoiler, pyBoiler } from "../../boilerCodes/boilerPlate";
-const Navbar = ({ language, setLanguage, setCode }) => {
+import monacoThemes from "monaco-themes/themes/themelist";
+import { defineTheme } from "../../lib/defineTheme";
+import Select from "react-select";
+const Navbar = ({ language, setLanguage, setCode, setTheme, theme }) => {
+	function handleThemeChange(th) {
+		const theme = th;
+		console.log("theme...", theme);
+
+		if (["light", "vs-dark"].includes(theme.value)) {
+			setTheme(theme);
+		} else {
+			defineTheme(theme.value).then((_) => setTheme(theme.value));
+		}
+	}
+	const languageOptions = [
+		{
+			label: "Javascript",
+			value: "js",
+		},
+		{
+			label: "C++",
+			value: "cpp",
+		},
+		{
+			label: "Python",
+			value: "py",
+		},
+	];
 	return (
-		<div>
-			<label>Language :</label>
-			<select
+		<div className="flex">
+			<Select
+				placeholder={language.label}
+				options={languageOptions}
+				value={language.value}
+				className="w-1/3"
 				onChange={(e) => {
-					setLanguage(e.target.value);
+					setLanguage(e.value);
 					const boiler =
-						e.target.value === "cpp"
+						e.value === "cpp"
 							? cppBoiler
-							: e.target.value === "py"
+							: e.value === "py"
 							? pyBoiler
 							: jsBoiler;
 					setCode(boiler);
 				}}
-				value={language}>
-				<option value="cpp">C++</option>
-				<option value="py">Python</option>
-				<option value="js">JavaScript</option>
-			</select>
+			/>
+			<Select
+				placeholder={"Cobalt"}
+				options={Object.entries(monacoThemes).map(([themeId, themeName]) => ({
+					label: themeName,
+					value: themeId,
+					key: themeId,
+				}))}
+				value={theme.value}
+				className="w-1/3"
+				onChange={handleThemeChange}
+			/>
 		</div>
 	);
 };
