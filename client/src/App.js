@@ -14,11 +14,12 @@ function App() {
 		label: "C++",
 		value: "cpp",
 	});
+	const [toggled, setToggled] = useState(false);
 	const [testInput, setTestInput] = useState("");
-	const [theme, setTheme] = useState("cobalt");
+	const [theme, setTheme] = useState("vs-dark");
 	const handleSubmit = async () => {
 		const payload = {
-			language,
+			language: language.value,
 			code,
 			testInput,
 		};
@@ -37,32 +38,34 @@ function App() {
 		}
 	};
 	return (
-		<div className="m-4 h-screen w-full">
-			<h1>Leetcode Ide</h1>
-			<div className="flex">
-				<div className="flex flex-col w-2/3">
+		<div className="h-screen w-full">
+			<div className="flex md:flex-row flex-col h-full w-full">
+				<div className="flex h-full flex-col md:w-2/3 w-full ">
 					<Navbar
 						setLanguage={setLanguage}
 						language={language}
 						setCode={setCode}
 						setTheme={setTheme}
 						theme={theme}
+						handleSubmit={handleSubmit}
 					/>
-					<div>
-						<CodeEditor
-							theme={theme}
-							code={code}
-							setCode={setCode}
-							language={language}
-						/>
-					</div>
+
+					<CodeEditor
+						theme={theme}
+						code={code}
+						setCode={setCode}
+						language={language}
+					/>
 				</div>
-				<div className="w-1/3 flex flex-col m-2">
-					<CodeOutput output={output} />
-					<CodeInput testInput={testInput} setTestInput={setTestInput} />
+				<div className="md:w-1/3 flex w-full md:flex-col flex-row-reverse h-full md:m-0 mt-8">
+					<CodeOutput output={output} toggled={toggled} />
+					<CodeInput
+						testInput={testInput}
+						setTestInput={setTestInput}
+						setToggled={setToggled}
+					/>
 				</div>
 			</div>
-			<button onClick={handleSubmit}>Submit</button>
 		</div>
 	);
 }

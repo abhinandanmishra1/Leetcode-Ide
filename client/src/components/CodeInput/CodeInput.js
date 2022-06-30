@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+	faSquareCaretUp,
+	faSquareCaretDown,
+} from "@fortawesome/free-solid-svg-icons";
+const CodeInput = ({ testInput, setTestInput, setToggled }) => {
+	const [toggleInputBar, setToggleInputBar] = useState(true);
 
-const CodeInput = ({ testInput, setTestInput }) => {
 	return (
-		<div className="flex flex-col m-2 mt-4">
-			<label>Input</label>
+		<div
+			className={`flex flex-col justify-end w-1/2 md:w-full bg-gray-100 ${
+				toggleInputBar ? "h-16" : "h-1/3"
+			}`}>
+			<button
+				className="flex ml-0 items-center bg-gray-500 pt-2 pr-2 rounded-md text-base justify-center w-16"
+				onClick={() => {
+					setToggleInputBar(!toggleInputBar);
+					setToggled(!toggleInputBar);
+				}}>
+				Input{" "}
+				<FontAwesomeIcon
+					icon={toggleInputBar ? faSquareCaretUp : faSquareCaretDown}
+					size="xs"
+					className="ml-1"
+				/>
+			</button>
 			<textarea
 				name=""
 				id=""
-				className="p-2"
+				className={`p-2 outline-none border-none bg-white ${
+					toggleInputBar ? "hidden" : ""
+				}`}
 				cols="30"
-				rows="10"
-				placeholder="Test case"
+				rows="15"
+				placeholder=""
 				value={testInput}
 				onChange={(e) => setTestInput(e.target.value)}></textarea>
 		</div>

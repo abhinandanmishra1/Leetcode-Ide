@@ -4,7 +4,7 @@ import Editor from "@monaco-editor/react";
 const CodeEditor = ({ theme, code, setCode, language }) => {
 	return (
 		<Editor
-			height="70vh"
+			height="95vh"
 			width={`100%`}
 			language={
 				(language === "py"
@@ -15,6 +15,7 @@ const CodeEditor = ({ theme, code, setCode, language }) => {
 			}
 			value={code}
 			theme={theme}
+			className="text-3xl"
 			defaultValue="//Write your code here"
 			onChange={(value) => setCode(value)}
 		/>
