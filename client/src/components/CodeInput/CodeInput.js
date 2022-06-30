@@ -9,16 +9,16 @@ const CodeInput = ({ testInput, setTestInput, setToggled }) => {
 
 	return (
 		<div
-			className={`flex flex-col justify-end w-1/2 md:w-full bg-gray-100 ${
-				toggleInputBar ? "h-16" : "h-1/3"
+			className={`flex flex-col justify-end w-1/2 md:w-full bg-gray-100 h-64 ${
+				toggleInputBar ? "md:h-16" : "md:h-1/3"
 			}`}>
 			<button
-				className="flex ml-0 items-center bg-gray-500 pt-2 pr-2 rounded-md text-base justify-center w-16"
+				className="flex ml-0 items-center bg-gray-200 pt-2 pr-2 rounded-md text-base justify-center w-16"
 				onClick={() => {
 					setToggleInputBar(!toggleInputBar);
 					setToggled(!toggleInputBar);
 				}}>
-				Input{" "}
+				stdin{" "}
 				<FontAwesomeIcon
 					icon={toggleInputBar ? faSquareCaretUp : faSquareCaretDown}
 					size="xs"

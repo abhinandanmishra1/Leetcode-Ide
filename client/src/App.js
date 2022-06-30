@@ -17,6 +17,7 @@ function App() {
 	const [toggled, setToggled] = useState(false);
 	const [testInput, setTestInput] = useState("");
 	const [theme, setTheme] = useState("vs-dark");
+	const [status, setStatus] = useState(null);
 	const handleSubmit = async () => {
 		const payload = {
 			language: language.value,
@@ -27,7 +28,8 @@ function App() {
 		try {
 			const { data } = await axios.post(url, payload);
 			setOutput(data.output);
-			console.log(data.output);
+			// console.log(data.output);
+			setStatus("Finished");
 		} catch ({ response }) {
 			if (response) {
 				const error = response.data.err.stderr;
@@ -48,6 +50,7 @@ function App() {
 						setTheme={setTheme}
 						theme={theme}
 						handleSubmit={handleSubmit}
+						setStatus={setStatus}
 					/>
 
 					<CodeEditor
@@ -57,8 +60,8 @@ function App() {
 						language={language}
 					/>
 				</div>
-				<div className="md:w-1/3 flex w-full md:flex-col flex-row-reverse h-full md:m-0 mt-8">
-					<CodeOutput output={output} toggled={toggled} />
+				<div className="md:w-1/3 border-l-1 border-gray-200 flex w-full md:flex-col flex-row-reverse h-full">
+					<CodeOutput output={output} toggled={toggled} status={status} />
 					<CodeInput
 						testInput={testInput}
 						setTestInput={setTestInput}

@@ -1,15 +1,27 @@
 import React from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
-const CodeOutput = ({ output, toggled }) => {
+const CodeOutput = ({ output, toggled, status }) => {
 	return (
 		<div
-			className={`flex flex-col bg-gray-100 p-4 w-1/2 md:w-full ${
-				toggled ? "h-full" : "h-4/6"
+			className={`flex flex-col bg-gray-100 p-4 h-64 w-1/2 md:w-full ${
+				toggled ? "md:h-full" : "md:h-4/6"
 			}`}>
-			<label className="flex text-xl border-b-2 border-gray-200">Output</label>
+			<label className="flex text-xl border-b-2 border-gray-200 pb-4 font-semibold text-gray-600">
+				Output:{" "}
+				{status && (
+					<span
+						className={`ml-2 block w-28 font-bold text-base text-center rounded-full text-white p-1 ${
+							status === "Running" ? "bg-[#0088cc]" : "bg-[#5cb85c]"
+						} `}>
+						{status}
+					</span>
+				)}
+			</label>
+
 			<TextareaAutosize
-				className="w-full min-h-full max-h-screen "
+				className="w-full min-h-full max-h-screen p-2 "
+				style={{ fontFamily: "Consolas, monaco, monospace" }}
 				value={output}
 				disabled
 			/>

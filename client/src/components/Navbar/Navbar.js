@@ -13,6 +13,7 @@ const Navbar = ({
 	setTheme,
 	theme,
 	handleSubmit,
+	setStatus,
 }) => {
 	function handleThemeChange(th) {
 		const theme = th;
@@ -41,7 +42,10 @@ const Navbar = ({
 	return (
 		<div className="ml-2 mt-2 w-full flex h-8 md:h-12 justify-between mb-2">
 			<button
-				onClick={handleSubmit}
+				onClick={() => {
+					handleSubmit();
+					setStatus("Running");
+				}}
 				className="bg-[#5cb85c] border-[#4cae4c] border-1 text-white rounded-full md:p-2 p-1 w-32 text-sm md:text-base hover:border-[#398439] hover:bg-[#449d44] ">
 				<FontAwesomeIcon
 					icon={faPlayCircle}
@@ -51,7 +55,7 @@ const Navbar = ({
 				/>
 				<span>Run Code</span>
 			</button>
-			<div className="flex md:w-1/3 w-1/2 justify-around">
+			<div className="flex md:w-1/2 w-2/3 justify-around">
 				<Select
 					placeholder={language.label}
 					options={languageOptions}
