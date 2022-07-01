@@ -14,7 +14,7 @@ function App() {
 		label: "C++",
 		value: "cpp",
 	});
-	const [toggled, setToggled] = useState(false);
+	const [toggled, setToggled] = useState(true);
 	const [testInput, setTestInput] = useState("");
 	const [theme, setTheme] = useState("vs-dark");
 	const [status, setStatus] = useState(null);

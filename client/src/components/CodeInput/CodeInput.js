@@ -15,8 +15,8 @@ const CodeInput = ({ testInput, setTestInput, setToggled }) => {
 			<button
 				className="flex ml-0 items-center bg-gray-200 pt-2 pr-2 rounded-md text-base justify-center w-16"
 				onClick={() => {
-					setToggleInputBar(!toggleInputBar);
 					setToggled(!toggleInputBar);
+					setToggleInputBar(!toggleInputBar);
 				}}>
 				stdin{" "}
 				<FontAwesomeIcon
