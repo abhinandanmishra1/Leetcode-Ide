@@ -9,7 +9,7 @@ const CodeInput = ({ testInput, setTestInput, setToggled }) => {
 
 	return (
 		<div
-			className={`flex flex-col justify-end w-1/2 md:w-full bg-gray-100 h-64 ${
+			className={` sm:border flex flex-col justify-end w-1/2 md:w-full bg-gray-100 h-64 ${
 				toggleInputBar ? "md:h-16" : "md:h-1/3"
 			}`}>
 			<button

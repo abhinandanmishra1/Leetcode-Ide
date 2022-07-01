@@ -4,7 +4,7 @@ import TextareaAutosize from "react-textarea-autosize";
 const CodeOutput = ({ output, toggled, status }) => {
 	return (
 		<div
-			className={`flex flex-col bg-gray-100 p-4 h-64 w-1/2 md:w-full ${
+			className={`flex flex-col overflow-hidden bg-gray-100 p-4 h-64 w-1/2 md:w-full ${
 				toggled ? "md:h-full" : "md:h-4/6"
 			}`}>
 			<label className="flex text-xl border-b-2 border-gray-200 pb-4 font-semibold text-gray-600">
@@ -18,13 +18,11 @@ const CodeOutput = ({ output, toggled, status }) => {
 					</span>
 				)}
 			</label>
-
-			<TextareaAutosize
-				className="w-full min-h-full max-h-screen p-2 "
-				style={{ fontFamily: "Consolas, monaco, monospace" }}
-				value={output}
-				disabled
-			/>
+			<div className="w-full h-full flex flex-col p-2 overflow-y-auto">
+				{output.split("\r\n").map((line, index) => (
+					<samp key={index}>{line}</samp>
+				))}
+			</div>
 		</div>
 	);
 };
