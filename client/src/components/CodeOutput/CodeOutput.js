@@ -1,5 +1,4 @@
 import React from "react";
-import TextareaAutosize from "react-textarea-autosize";
 
 const CodeOutput = ({ output, toggled, status }) => {
 	return (
