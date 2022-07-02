@@ -1,4 +1,5 @@
 import React from "react";
+import TextareaAutosize from "react-textarea-autosize";
 
 const CodeOutput = ({ output, toggled, status }) => {
 	return (
@@ -11,10 +12,7 @@ const CodeOutput = ({ output, toggled, status }) => {
 				{status && (
 					<span
 						className={`ml-2 block w-28 font-bold text-base text-center rounded-full text-white p-1 ${
-							(status === "Running" && "bg-[#0088cc]") ||
-							(status === "Finished" && "bg-[#5cb85c]") ||
-							(status === "Compile Error" && "bg-[#d9534f]") ||
-							(status === "Server Error" && "bg-[#FFC300]")
+							status === "Running" ? "bg-[#0088cc]" : "bg-[#5cb85c]"
 						} `}>
 						{status}
 					</span>

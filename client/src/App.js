@@ -34,10 +34,7 @@ function App() {
 			if (response) {
 				const error = response.data.err.stderr;
 				setOutput(error);
-				console.log(response);
-				setStatus("Compile Error");
 			} else {
-				setStatus("Server Error");
 				setOutput("Error connecting with the Server!");
 			}
 		}
