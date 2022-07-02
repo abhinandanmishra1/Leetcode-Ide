@@ -29,7 +29,12 @@ app.post("/run", async (req, res) => {
 		res.status(500).json({ err });
 	}
 });
-
-app.listen(5000, () => {
+if (process.env.NODE_ENV === "production") {
+	app.use(express.static(path.join(__dirname, "../client", "build")));
+	app.get("/*", (req, res) => {
+		res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
+	});
+}
+app.listen(process.env.PORT, () => {
 	console.log("Listening on port 5000");
 });
