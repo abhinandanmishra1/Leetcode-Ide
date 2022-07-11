@@ -33,3 +33,10 @@ https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-
   - Return the error or result as promise to frontend.
 
 > This was all about the folder structure and working of the files.
+
+
+**For Deploying the project**
+
+- As I was not getting any idea how to create a file on mongodb database and then compile that file.
+- I researched a lot about it and then I found some online compiler api's that gives support to all languages.
+- I will be implementing that in my project and then will deploy it.
