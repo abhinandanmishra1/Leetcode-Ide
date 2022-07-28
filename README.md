@@ -48,7 +48,7 @@ https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-
 
 ## Using Rapid API and Judge0 
 - I have used RapidAPI and JUDGE0 for compiling the codes.
-- 
+
 
 ### Things that are to be implemented in it
 - [] Boiler Code for all languages.
