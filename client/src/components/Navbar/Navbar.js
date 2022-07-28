@@ -1,50 +1,88 @@
 import React from "react";
-import { cppBoiler, jsBoiler, pyBoiler } from "../../boilerCodes/boilerPlate";
-import monacoThemes from "monaco-themes/themes/themelist";
-import { defineTheme } from "../../lib/defineTheme";
-import Select from "react-select";
+import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlayCircle } from "@fortawesome/free-solid-svg-icons";
-
+import LanguageDropdown from "../Dropdowns/LanguageDropdown";
+import ThemeDropdown from "../Dropdowns/ThemeDropdown";
 const Navbar = ({
 	language,
 	setLanguage,
-	setCode,
 	setTheme,
 	theme,
-	handleSubmit,
+	setOutput,
 	setStatus,
+	testInput,
+	code
 }) => {
-	function handleThemeChange(th) {
-		const theme = th;
-		console.log("theme...", theme);
+	const checkStatus = async (token) => {
+		console.log("checking status")
+    const options = {
+      method: "GET",
+      url: 'https://judge0-ce.p.rapidapi.com/submissions/' + token,
+      params: { base64_encoded: "true", fields: "*" },
+      headers: {
+        "X-RapidAPI-Host": process.env.REACT_APP_RAPID_API_HOST,
+        "X-RapidAPI-Key": process.env.REACT_APP_RAPID_API_KEY,
+      },
+    };
+    try {
+      let response = await axios.request(options);
+      let statusId = response.data.status?.id;
 
-		if (["light", "vs-dark"].includes(theme.value)) {
-			setTheme(theme);
-		} else {
-			defineTheme(theme.value).then((_) => setTheme(theme.value));
+      if (statusId === 1 || statusId === 2) {
+        //  processing --> so run again the same token after 2s
+        setTimeout(() => {
+          checkStatus(token)
+        }, 2000)
+        return
+      } else {
+        setOutput(response.data)
+        setStatus(`Finished`)
+        console.log('response.data', response.data)
+        return
+      }
+    } catch (err) {
+      console.log("err", err);
+    }
+  };
+
+	const handleSubmit = async () => {
+		setStatus("Running");
+		const formData={
+			language_id: language.id,
+      source_code: btoa(code),
+      stdin: btoa(testInput),
 		}
-	}
-	const languageOptions = [
-		{
-			label: "Javascript",
-			value: "js",
-		},
-		{
-			label: "C++",
-			value: "cpp",
-		},
-		{
-			label: "Python",
-			value: "py",
-		},
-	];
+		const options = {
+      method: "POST",
+      url: 'https://judge0-ce.p.rapidapi.com/submissions',
+      params: { base64_encoded: "true", fields: "*" },
+      headers: {
+        "content-type": "application/json",
+        "Content-Type": "application/json",
+        "X-RapidAPI-Host": process.env.REACT_APP_RAPID_API_HOST,
+        "X-RapidAPI-Key": process.env.REACT_APP_RAPID_API_KEY,
+      },
+      data: formData,
+    };
+		await axios
+      .request(options)
+      .then(function (response) {
+        console.log("res.data", response.data);
+        const token = response.data.token;
+        checkStatus(token);
+      })
+      .catch((err) => {
+        let error = err.response ? err.response.data : err;
+        console.log(error);
+      });
+		
+	};
 	return (
 		<div className="ml-2 mt-2 w-full flex h-8 md:h-12 justify-between mb-2">
 			<button
 				onClick={() => {
 					handleSubmit();
-					setStatus("Running");
 				}}
 				className="bg-[#5cb85c] border-[#4cae4c] border-1 text-white rounded-full md:p-2 p-1 w-32 text-sm md:text-base hover:border-[#398439] hover:bg-[#449d44] ">
 				<FontAwesomeIcon
@@ -56,33 +94,8 @@ const Navbar = ({
 				<span>Run Code</span>
 			</button>
 			<div className="flex md:w-1/2 w-2/3 justify-around">
-				<Select
-					placeholder={language.label}
-					options={languageOptions}
-					value={language.value}
-					className="w-1/3"
-					onChange={(e) => {
-						setLanguage(e);
-						const boiler =
-							e.value === "cpp"
-								? cppBoiler
-								: e.value === "py"
-								? pyBoiler
-								: jsBoiler;
-						setCode(boiler);
-					}}
-				/>
-				<Select
-					placeholder={theme}
-					options={Object.entries(monacoThemes).map(([themeId, themeName]) => ({
-						label: themeName,
-						value: themeId,
-						key: themeId,
-					}))}
-					value={theme.value}
-					className="w-1/2	"
-					onChange={handleThemeChange}
-				/>
+				<LanguageDropdown language={language} setLanguage={setLanguage}/>
+				<ThemeDropdown theme={theme} setTheme={setTheme} />
 			</div>
 		</div>
 	);
