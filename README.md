@@ -40,3 +40,22 @@ https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-
 - As I was not getting any idea how to create a file on mongodb database and then compile that file.
 - I researched a lot about it and then I found some online compiler api's that gives support to all languages.
 - I will be implementing that in my project and then will deploy it.
+
+
+---
+
+**Version -2** 
+
+## Using Rapid API and Judge0 
+- I have used RapidAPI and JUDGE0 for compiling the codes.
+
+
+### Things that are to be implemented in it
+- [] Boiler Code for all languages.
+- [] Facility to save code snippets with some keywords and accessing it
+- [] Saving the code in system.
+
+### Later on extra features 
+- [] Authentication 
+- [] Settings, snippets for each user
+- [] Many more things

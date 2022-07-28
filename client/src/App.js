@@ -1,44 +1,26 @@
 import "./App.css";
 import React, { useState } from "react";
-import axios from "axios";
 import CodeEditor from "./components/CodeEditor/CodeEditor";
 import CodeOutput from "./components/CodeOutput/CodeOutput";
 import CodeInput from "./components/CodeInput/CodeInput";
 import Navbar from "./components/Navbar/Navbar";
-import { cppBoiler } from "./boilerCodes/boilerPlate";
+import { cpp } from "./boilerCodes";
 
 function App() {
-	const [code, setCode] = useState(cppBoiler);
+	const [code, setCode] = useState(cpp);
 	const [output, setOutput] = useState("");
 	const [language, setLanguage] = useState({
 		label: "C++",
 		value: "cpp",
+		id:76,
+		name: "C++ (Clang 7.0.1)",
 	});
+
 	const [toggled, setToggled] = useState(true);
 	const [testInput, setTestInput] = useState("");
 	const [theme, setTheme] = useState("vs-dark");
 	const [status, setStatus] = useState(null);
-	const handleSubmit = async () => {
-		const payload = {
-			language: language.value,
-			code,
-			testInput,
-		};
-		const url = "http://localhost:5000/run";
-		try {
-			const { data } = await axios.post(url, payload);
-			setOutput(data.output);
-			// console.log(data.output);
-			setStatus("Finished");
-		} catch ({ response }) {
-			if (response) {
-				const error = response.data.err.stderr;
-				setOutput(error);
-			} else {
-				setOutput("Error connecting with the Server!");
-			}
-		}
-	};
+
 	return (
 		<div className="h-screen w-full">
 			<div className="flex md:flex-row flex-col h-full w-full">
@@ -46,11 +28,12 @@ function App() {
 					<Navbar
 						setLanguage={setLanguage}
 						language={language}
-						setCode={setCode}
 						setTheme={setTheme}
 						theme={theme}
-						handleSubmit={handleSubmit}
+						setOutput={setOutput}
 						setStatus={setStatus}
+						testInput={testInput}
+						code={code}
 					/>
 
 					<CodeEditor
@@ -60,7 +43,11 @@ function App() {
 						language={language}
 					/>
 				</div>
-				<div className="md:w-1/3 border-l-1 border-gray-200 flex w-full md:flex-col flex-row-reverse h-full">
+				<div 
+				className="md:w-1/3 border-l-1
+				border-gray-200 flex w-full md:flex-col 
+				flex-row-reverse h-full"
+				>
 					<CodeOutput output={output} toggled={toggled} status={status} />
 					<CodeInput
 						testInput={testInput}

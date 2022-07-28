@@ -1,12 +1,21 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useWindowSize } from "../../Hook/windowSize";
 import {
 	faSquareCaretUp,
 	faSquareCaretDown,
 } from "@fortawesome/free-solid-svg-icons";
 const CodeInput = ({ testInput, setTestInput, setToggled }) => {
 	const [toggleInputBar, setToggleInputBar] = useState(true);
-
+	const {width} = useWindowSize();
+	useEffect(() => {
+		if(width<768){
+			setToggleInputBar(false);
+		}else{
+			setToggleInputBar(true);
+		}
+	}, [width])
+	
 	return (
 		<div
 			className={` sm:border flex flex-col justify-end w-1/2 md:w-full bg-gray-100 h-64 ${
