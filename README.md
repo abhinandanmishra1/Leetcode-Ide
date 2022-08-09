@@ -1,4 +1,4 @@
-### Leetcode Ide
+### Leetcode Ide  [See Live](https://leetcode-ide.vercel.app/)
 
 - It is a clone of Leetcode Ide
 
@@ -8,7 +8,7 @@
 https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-b002-e30d4023ce2c.mp4
 
 
-**Understanding Folder Structure**
+**Understanding Folder Structure [ This was version1 and is moved to another branch ]** 
 
 - There are two folders `client` for frontend `backend` for backend.
 - In `client` folder:
