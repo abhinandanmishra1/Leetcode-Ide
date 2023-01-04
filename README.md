@@ -59,3 +59,13 @@ https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-
 - [] Authentication 
 - [] Settings, snippets for each user
 - [] Many more things
+
+### How to run this project in your local?
+
+- Go to [Judge0-rapidApi](https://rapidapi.com/judge0-official/api/judge0-ce/) and signup if needed
+- Create a `.env` file with given keys and values [These values can be taken from above link]
+```env
+  REACT_APP_RAPID_API_HOST = X-RapidAPI-Host
+  REACT_APP_RAPID_API_KEY = X-RapidAPI-Key
+  REACT_APP_RAPID_API_URL = X-RapidAPI-Host/submissions
+```
