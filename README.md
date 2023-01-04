@@ -1,16 +1,14 @@
-### Leetcode Ide
+### Leetcode Ide  [See Live](https://leetcode-ide.vercel.app/)
 
 - It is a clone of Leetcode Ide
 
 **Version-1**
 <kbd>![Version-1](https://user-images.githubusercontent.com/64205626/176822891-187fb3b9-f3b4-429f-ace7-2f937ac0f23d.png)</kbd>
 
-
 https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-b002-e30d4023ce2c.mp4
 
 
-
-**Understanding Folder Structure**
+**Understanding Folder Structure [ This was version1 and is moved to another branch ]** 
 
 - There are two folders `client` for frontend `backend` for backend.
 - In `client` folder:
@@ -50,10 +48,14 @@ https://user-images.githubusercontent.com/64205626/177022732-d633f91a-ae5f-4afc-
 - I have used RapidAPI and JUDGE0 for compiling the codes.
 
 
+https://user-images.githubusercontent.com/64205626/182112312-18be0413-a8ef-4f99-a676-8f8bd27f4fc2.mp4
+
+
 ### Things that are to be implemented in it
-- [] Boiler Code for all languages.
-- [] Facility to save code snippets with some keywords and accessing it
-- [] Saving the code in system.
+- [ ] Boiler Code for all languages.
+- [ ] Facility to save code snippets with some keywords and accessing it
+- [ ] Saving the code in system.
+- [ ] Save current code in localstorage to avoid loss of code on reload.
 
 ### Later on extra features 
 - [] Authentication 
