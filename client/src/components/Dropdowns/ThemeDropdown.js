@@ -22,7 +22,7 @@ export default function ThemeDropdown({theme,setTheme}) {
 						key: themeId,
 					}))}
 					value={theme.value}
-					className="w-1/2	"
+					className="w-full"
 					onChange={handleThemeChange}
 				/>
   )

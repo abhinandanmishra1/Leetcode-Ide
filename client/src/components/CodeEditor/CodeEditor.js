@@ -1,36 +1,26 @@
 import React,{useEffect, useState} from "react";
 import Editor from "@monaco-editor/react";
+
 import { useWindowSize } from "../../Hook/windowSize";
+import { handleEditorDidMount } from "../../utils/codeEditor.utils";
+
 const CodeEditor = ({ theme, code, setCode, language }) => {
-	function handleEditorDidMount(editor, monaco) {
-		editor.updateOptions({
-			// lineNumbers: "off",
-			fontSize: "16px",
-			mouseWheelZoom: true,
-		});
-		console.log(monaco.editor.EditorOption);
-	}
 	const { width } = useWindowSize();
-	const [height,setHeight] = useState("95vh");
+	const [editorHeight,setEditorHeight] = useState("95vh");
 
 	useEffect(() => {
     if(width>768){
-			setHeight("95vh");
+			setEditorHeight("95vh");
 		}else{
-			setHeight("55vh");
+			setEditorHeight("55vh");
 		}
   }, [width]);
+
 	return (
 		<Editor
-			height={height}
+			height={editorHeight}
 			width={`100%`}
-			language={
-				(language === "py"
-					? "python"
-					: language === "js"
-					? "javascript"
-					: "cpp") || "cpp"
-			}
+			language={language}
 			value={code}
 			theme={theme}
 			className="text-3xl"

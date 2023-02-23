@@ -1,26 +1,31 @@
 import "./App.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CodeEditor from "./components/CodeEditor/CodeEditor";
 import CodeOutput from "./components/CodeOutput/CodeOutput";
 import CodeInput from "./components/CodeInput/CodeInput";
 import Navbar from "./components/Navbar/Navbar";
-import { cpp } from "./boilerCodes";
+import {boilerCodes} from "./boilerCodes";
 
 function App() {
-	const [code, setCode] = useState(cpp);
 	const [output, setOutput] = useState("");
 	const [language, setLanguage] = useState({
-		label: "C++",
-		value: "cpp",
-		id:76,
-		name: "C++ (Clang 7.0.1)",
+		label: "JavaScript",
+		value: "javascript",
+		id:63,
+		name: "JavaScript",
 	});
 
+	
+	const [code, setCode] = useState(boilerCodes(language.id));
 	const [toggled, setToggled] = useState(true);
 	const [testInput, setTestInput] = useState("");
 	const [theme, setTheme] = useState("vs-dark");
 	const [status, setStatus] = useState(null);
 
+	useEffect(() => {
+		setCode(boilerCodes(language.id));
+	}, [language]);
+	
 	return (
 		<div className="h-screen w-full">
 			<div className="flex md:flex-row flex-col h-full w-full">
