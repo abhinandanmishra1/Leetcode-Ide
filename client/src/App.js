@@ -32,7 +32,7 @@ function App() {
 				<div className="flex h-full flex-col md:w-2/3 w-full ">
 					<Navbar
 						setLanguage={setLanguage}
-						language={language}
+						language={language.value}
 						setTheme={setTheme}
 						theme={theme}
 						setOutput={setOutput}
