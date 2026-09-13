@@ -268,4 +268,114 @@ console.log('Read:', raw);
   assert.strictEqual(result.stdout.trim(), 'Read: hello typescript');
 });
 
+test('executor throws Runtime Error when JavaScript expects input but stdin is empty', async () => {
+  const jsCode = `
+function main() {
+    const n = getNumInput();
+    console.log(n);
+}
+main();
+`;
+  const submission = {
+    token: 'test-js-eof',
+    source_code: jsCode,
+    language: getLanguageById(63),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 11); // Runtime Error
+  assert.match(result.stderr, /Unexpected end of stdin/);
+});
 
+test('executor throws Runtime Error when TypeScript expects input but stdin is empty', async () => {
+  const tsCode = `
+function main(): void {
+    const n: number = getNumInput();
+    console.log(n);
+}
+main();
+`;
+  const submission = {
+    token: 'test-ts-eof',
+    source_code: tsCode,
+    language: getLanguageById(74),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 11); // Runtime Error
+  assert.match(result.stderr, /Unexpected end of stdin/);
+});
+
+test('executor throws Runtime Error when JavaScript receives invalid integer like 2h8', async () => {
+  const jsCode = `
+function main() {
+    const n = getIntInput();
+    console.log(n);
+}
+main();
+`;
+  const submission = {
+    token: 'test-js-invalid-int',
+    source_code: jsCode,
+    language: getLanguageById(63),
+    stdin: '2h8',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 11); // Runtime Error
+  assert.match(result.stderr, /Expected integer input on stdin, received "2h8"/);
+});
+
+test('executor runs JavaScript with Scanner class', async () => {
+  const jsCode = `
+const sc = new Scanner();
+const n = sc.nextInt();
+const s = sc.next();
+const arr = sc.nextArray(n);
+console.log(n, s, arr.join(','));
+`;
+  const submission = {
+    token: 'test-js-scanner',
+    source_code: jsCode,
+    language: getLanguageById(63),
+    stdin: '3 hello 10 20 30',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), '3 hello 10,20,30');
+});
+
+test('executor runs TypeScript with Scanner class', async () => {
+  const tsCode = `
+const sc = new Scanner();
+const n: number = sc.nextInt();
+const s: string = sc.next();
+const arr: number[] = sc.nextArray(n);
+console.log(n, s, arr.join(','));
+`;
+  const submission = {
+    token: 'test-ts-scanner',
+    source_code: tsCode,
+    language: getLanguageById(74),
+    stdin: '3 world 100 200 300',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), '3 world 100,200,300');
+});
+
+test('executor throws Runtime Error when Scanner receives 2h8 for nextInt', async () => {
+  const jsCode = `
+const sc = new Scanner();
+const n = sc.nextInt();
+console.log(n);
+`;
+  const submission = {
+    token: 'test-scanner-invalid-int',
+    source_code: jsCode,
+    language: getLanguageById(63),
+    stdin: '2h8',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 11); // Runtime Error
+  assert.match(result.stderr, /Expected integer input on stdin, received "2h8"/);
+});

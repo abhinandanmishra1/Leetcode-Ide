@@ -17,32 +17,108 @@ export default {
     }
 
     // Provide standard CP input parsing utilities if not declared
-    if (!code.includes('function getNumInput') && !code.includes('const getNumInput')) {
+    if (!code.includes('class Scanner')) {
       prefix += `
-let _inputTokens = [];
-let _tokenIndex = 0;
-function _loadInput() {
-    if (_inputTokens.length === 0) {
+class Scanner {
+    constructor(input) {
         try {
-            const raw = fs.readFileSync(0, 'utf-8');
-            _inputTokens = raw.trim().split(/\\s+/).filter(Boolean);
+            this.input = input !== undefined ? input : fs.readFileSync(0, 'utf8');
         } catch (e) {
-            _inputTokens = [];
+            this.input = '';
+        }
+        this.index = 0;
+        this.length = this.input.length;
+    }
+    hasNext() {
+        this.skipWhitespace();
+        return this.index < this.length;
+    }
+    skipWhitespace() {
+        while (this.index < this.length && this.input.charCodeAt(this.index) <= 32) {
+            this.index++;
         }
     }
+    next() {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected input but testcase did not provide it)");
+        }
+        const start = this.index;
+        while (this.index < this.length && this.input.charCodeAt(this.index) > 32) {
+            this.index++;
+        }
+        return this.input.slice(start, this.index);
+    }
+    nextInt() {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected integer but testcase did not provide it)");
+        }
+        const start = this.index;
+        let sign = 1;
+        if (this.input.charCodeAt(this.index) === 45) {
+            sign = -1;
+            this.index++;
+        } else if (this.input.charCodeAt(this.index) === 43) {
+            this.index++;
+        }
+        const digitStart = this.index;
+        let num = 0;
+        while (this.index < this.length) {
+            const code = this.input.charCodeAt(this.index);
+            if (code < 48 || code > 57) break;
+            num = num * 10 + (code - 48);
+            this.index++;
+        }
+        if (this.index === digitStart) {
+            const invalidToken = this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${invalidToken}"\`);
+        }
+        if (this.index < this.length && this.input.charCodeAt(this.index) > 32) {
+            const fullToken = this.input.slice(start, this.index) + this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${fullToken}"\`);
+        }
+        return num * sign;
+    }
+    nextFloat() {
+        const token = this.next();
+        const num = Number(token);
+        if (isNaN(num)) {
+            throw new Error(\`Runtime Error: Expected numeric input on stdin, received "\${token}"\`);
+        }
+        return num;
+    }
+    nextBigInt() {
+        const token = this.next();
+        try {
+            return BigInt(token);
+        } catch {
+            throw new Error(\`Runtime Error: Expected BigInt input on stdin, received "\${token}"\`);
+        }
+    }
+    nextArray(n) {
+        if (typeof n !== 'number' || isNaN(n) || n < 0) {
+            throw new Error(\`Runtime Error: Expected non-negative integer for array size, received "\${n}"\`);
+        }
+        const arr = new Array(n);
+        for (let i = 0; i < n; i++) {
+            if (!this.hasNext()) {
+                throw new Error(\`Runtime Error: Unexpected end of stdin (expected \${n} array elements, but testcase only provided \${i})\`);
+            }
+            arr[i] = this.nextInt();
+        }
+        return arr;
+    }
 }
-function getStringInput() {
-    _loadInput();
-    return _tokenIndex < _inputTokens.length ? _inputTokens[_tokenIndex++] : "";
+let _defaultScannerInstance;
+function _getDefaultScanner() {
+    if (!_defaultScannerInstance) _defaultScannerInstance = new Scanner();
+    return _defaultScannerInstance;
 }
-function getNumInput() {
-    return Number(getStringInput());
-}
-function getArrayInput(n) {
-    const arr = [];
-    for (let i = 0; i < n; i++) arr.push(getNumInput());
-    return arr;
-}
+function getStringInput() { return _getDefaultScanner().next(); }
+function getIntInput() { return _getDefaultScanner().nextInt(); }
+function getNumInput() { return _getDefaultScanner().nextFloat(); }
+function getArrayInput(n) { return _getDefaultScanner().nextArray(n); }
 `;
     }
 

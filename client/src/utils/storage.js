@@ -1,4 +1,5 @@
 import { INITIAL_SEEDED_TEMPLATES } from "../components/Templates/defaultTemplates";
+import { boilerCodes } from "../boilerCodes";
 
 // CodePad storage keys (with legacy leetcode_ide_* fallbacks)
 export const CODE_PREFIX = "codepad_code_";
@@ -22,8 +23,8 @@ export const LEGACY_SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
 export const TEMPLATES_KEY = "codepad_templates";
 export const LEGACY_TEMPLATES_KEY = "leetcode_ide_templates";
 
-export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v4";
-export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v4";
+export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded";
+export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded";
 
 export const DEFAULT_TESTCASES = [
   {
@@ -95,7 +96,30 @@ export const getSavedCode = (languageId, defaultCode = "") => {
       `${CODE_PREFIX}${languageId}`,
       `${LEGACY_CODE_PREFIX}${languageId}`
     );
-    return saved !== null ? saved : defaultCode;
+    if (!saved) return defaultCode;
+
+    // Auto-migrate outdated boilerplate templates to the new strictly validated version
+    const numId = Number(languageId);
+    const isOutdatedJsTs =
+      (numId === 63 || numId === 74) &&
+      (saved.includes("function getNumInput") || saved.includes("_inputTokens")) &&
+      !saved.includes("class Scanner");
+
+    const isOutdatedCpp =
+      numId === 54 &&
+      saved.includes("readInt()");
+
+    const isOutdatedC =
+      numId === 50 &&
+      saved.includes("readInt()");
+
+    if (isOutdatedJsTs || isOutdatedCpp || isOutdatedC) {
+      const fresh = boilerCodes(languageId);
+      saveCode(languageId, fresh);
+      return fresh;
+    }
+
+    return saved;
   } catch (e) {
     return defaultCode;
   }
@@ -284,7 +308,13 @@ export const getTemplates = (languageId) => {
     const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY, LEGACY_TEMPLATES_SEEDED_KEY);
     let list = [];
     if (!isSeeded) {
-      list = [...INITIAL_SEEDED_TEMPLATES];
+      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
+      const existing = raw ? JSON.parse(raw) : [];
+      // Keep any user-created custom templates
+      const userCustom = existing.filter(
+        (t) => !t.id?.startsWith("boilerplate_") && !t.id?.startsWith("binarysearch_")
+      );
+      list = [...INITIAL_SEEDED_TEMPLATES, ...userCustom];
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));
       localStorage.setItem(TEMPLATES_SEEDED_KEY, "true");
     } else {

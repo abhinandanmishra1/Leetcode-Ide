@@ -1,4 +1,3 @@
-// CodePad standard I/O starter code templates
 export const cppBoiler = `#include <bits/stdc++.h>
 using namespace std;
 
@@ -8,7 +7,7 @@ int main() {
 
     // 1. Read one number
     int n;
-    if (!(cin >> n)) return 0;
+    cin >> n;
 
     // 2. Read one string
     string s;
@@ -37,7 +36,6 @@ export const javaBoiler = `import java.util.*;
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        if (!sc.hasNextInt()) return;
 
         // 1. Read one number
         int n = sc.nextInt();
@@ -89,141 +87,309 @@ if __name__ == "__main__":
 
 export const jsBoiler = `const fs = require('fs');
 
-// ==========================================
-// Fast I/O Utilities for JavaScript
-// ==========================================
-let _inputTokens = [];
-let _tokenIndex = 0;
+class Scanner {
+    constructor() {
+        try {
+            this.input = fs.readFileSync(0, 'utf8');
+        } catch (e) {
+            this.input = '';
+        }
+        this.index = 0;
+        this.length = this.input.length;
+    }
 
-function _loadInput() {
-    if (_inputTokens.length === 0) {
-        const raw = fs.readFileSync(0, 'utf-8');
-        _inputTokens = raw.trim().split(/\\s+/).filter(Boolean);
+    hasNext() {
+        this.skipWhitespace();
+        return this.index < this.length;
+    }
+
+    skipWhitespace() {
+        while (
+            this.index < this.length &&
+            this.input.charCodeAt(this.index) <= 32
+        ) {
+            this.index++;
+        }
+    }
+
+    next() {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected input but testcase did not provide it)");
+        }
+
+        const start = this.index;
+
+        while (
+            this.index < this.length &&
+            this.input.charCodeAt(this.index) > 32
+        ) {
+            this.index++;
+        }
+
+        return this.input.slice(start, this.index);
+    }
+
+    nextInt() {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected integer but testcase did not provide it)");
+        }
+
+        const start = this.index;
+        let sign = 1;
+
+        if (this.input.charCodeAt(this.index) === 45) { // '-'
+            sign = -1;
+            this.index++;
+        } else if (this.input.charCodeAt(this.index) === 43) { // '+'
+            this.index++;
+        }
+
+        const digitStart = this.index;
+        let num = 0;
+
+        while (this.index < this.length) {
+            const code = this.input.charCodeAt(this.index);
+
+            if (code < 48 || code > 57) {
+                break;
+            }
+
+            num = num * 10 + (code - 48);
+            this.index++;
+        }
+
+        if (this.index === digitStart) {
+            const invalidToken = this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${invalidToken}"\`);
+        }
+
+        if (this.index < this.length && this.input.charCodeAt(this.index) > 32) {
+            const fullToken = this.input.slice(start, this.index) + this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${fullToken}"\`);
+        }
+
+        return num * sign;
+    }
+
+    nextFloat() {
+        const token = this.next();
+        const num = Number(token);
+        if (isNaN(num)) {
+            throw new Error(\`Runtime Error: Expected numeric input on stdin, received "\${token}"\`);
+        }
+        return num;
+    }
+
+    nextBigInt() {
+        const token = this.next();
+        try {
+            return BigInt(token);
+        } catch {
+            throw new Error(\`Runtime Error: Expected BigInt input on stdin, received "\${token}"\`);
+        }
+    }
+
+    nextArray(n) {
+        if (typeof n !== 'number' || isNaN(n) || n < 0) {
+            throw new Error(\`Runtime Error: Expected non-negative integer for array size, received "\${n}"\`);
+        }
+
+        const arr = new Array(n);
+
+        for (let i = 0; i < n; i++) {
+            if (!this.hasNext()) {
+                throw new Error(\`Runtime Error: Unexpected end of stdin (expected \${n} array elements, but testcase only provided \${i})\`);
+            }
+            arr[i] = this.nextInt();
+        }
+
+        return arr;
     }
 }
 
-/**
- * Reads the next token as a string
- */
-function getStringInput() {
-    _loadInput();
-    return _tokenIndex < _inputTokens.length ? _inputTokens[_tokenIndex++] : "";
-}
+const sc = new Scanner();
 
-/**
- * Reads the next token as a number
- */
-function getNumInput() {
-    return Number(getStringInput());
-}
+// 1. Read one number
+const n = sc.nextInt();
 
-/**
- * Reads the next n tokens as an array of numbers
- */
-function getArrayInput(n) {
-    const arr = [];
-    for (let i = 0; i < n; i++) {
-        arr.push(getNumInput());
-    }
-    return arr;
-}
+// 2. Read one string
+const s = sc.next();
 
-function main() {
-    // 1. Read one number
-    const n = getNumInput();
-    if (isNaN(n)) return;
+// 3. Read array of n numbers
+const arr = sc.nextArray(n);
 
-    // 2. Read one string
-    const s = getStringInput();
-
-    // 3. Read array of n numbers
-    const arr = getArrayInput(n);
-
-    // Output values
-    console.log(\`Number: \${n}\`);
-    console.log(\`String: \${s}\`);
-    console.log(\`Array: \${arr.join(' ')}\`);
-}
-
-main();
+// Output values
+console.log(\`Number: \${n}\`);
+console.log(\`String: \${s}\`);
+console.log(\`Array: \${arr.join(' ')}\`);
 `;
 
 export const tsBoiler = `import * as fs from 'fs';
 
-// ==========================================
-// Fast I/O Utilities for TypeScript
-// ==========================================
-let _inputTokens: string[] = [];
-let _tokenIndex: number = 0;
+class Scanner {
+    private input: string;
+    private index: number;
+    private length: number;
 
-function _loadInput(): void {
-    if (_inputTokens.length === 0) {
-        const raw = fs.readFileSync(0, 'utf-8');
-        _inputTokens = raw.trim().split(/\\s+/).filter(Boolean);
+    constructor() {
+        try {
+            this.input = fs.readFileSync(0, 'utf8');
+        } catch (e) {
+            this.input = '';
+        }
+        this.index = 0;
+        this.length = this.input.length;
+    }
+
+    hasNext(): boolean {
+        this.skipWhitespace();
+        return this.index < this.length;
+    }
+
+    skipWhitespace(): void {
+        while (
+            this.index < this.length &&
+            this.input.charCodeAt(this.index) <= 32
+        ) {
+            this.index++;
+        }
+    }
+
+    next(): string {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected input but testcase did not provide it)");
+        }
+
+        const start = this.index;
+
+        while (
+            this.index < this.length &&
+            this.input.charCodeAt(this.index) > 32
+        ) {
+            this.index++;
+        }
+
+        return this.input.slice(start, this.index);
+    }
+
+    nextInt(): number {
+        this.skipWhitespace();
+        if (this.index >= this.length) {
+            throw new Error("Runtime Error: Unexpected end of stdin (code expected integer but testcase did not provide it)");
+        }
+
+        const start = this.index;
+        let sign = 1;
+
+        if (this.input.charCodeAt(this.index) === 45) { // '-'
+            sign = -1;
+            this.index++;
+        } else if (this.input.charCodeAt(this.index) === 43) { // '+'
+            this.index++;
+        }
+
+        const digitStart = this.index;
+        let num = 0;
+
+        while (this.index < this.length) {
+            const code = this.input.charCodeAt(this.index);
+
+            if (code < 48 || code > 57) {
+                break;
+            }
+
+            num = num * 10 + (code - 48);
+            this.index++;
+        }
+
+        if (this.index === digitStart) {
+            const invalidToken = this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${invalidToken}"\`);
+        }
+
+        if (this.index < this.length && this.input.charCodeAt(this.index) > 32) {
+            const fullToken = this.input.slice(start, this.index) + this.next();
+            throw new Error(\`Runtime Error: Expected integer input on stdin, received "\${fullToken}"\`);
+        }
+
+        return num * sign;
+    }
+
+    nextFloat(): number {
+        const token = this.next();
+        const num = Number(token);
+        if (isNaN(num)) {
+            throw new Error(\`Runtime Error: Expected numeric input on stdin, received "\${token}"\`);
+        }
+        return num;
+    }
+
+    nextBigInt(): bigint {
+        const token = this.next();
+        try {
+            return BigInt(token);
+        } catch {
+            throw new Error(\`Runtime Error: Expected BigInt input on stdin, received "\${token}"\`);
+        }
+    }
+
+    nextArray(n: number): number[] {
+        if (typeof n !== 'number' || isNaN(n) || n < 0) {
+            throw new Error(\`Runtime Error: Expected non-negative integer for array size, received "\${n}"\`);
+        }
+
+        const arr = new Array<number>(n);
+
+        for (let i = 0; i < n; i++) {
+            if (!this.hasNext()) {
+                throw new Error(\`Runtime Error: Unexpected end of stdin (expected \${n} array elements, but testcase only provided \${i})\`);
+            }
+            arr[i] = this.nextInt();
+        }
+
+        return arr;
     }
 }
 
-/**
- * Reads the next token as a string
- */
-function getStringInput(): string {
-    _loadInput();
-    return _tokenIndex < _inputTokens.length ? _inputTokens[_tokenIndex++] : "";
-}
+const sc = new Scanner();
 
-/**
- * Reads the next token as a number
- */
-function getNumInput(): number {
-    return Number(getStringInput());
-}
+// 1. Read one number
+const n: number = sc.nextInt();
 
-/**
- * Reads the next n tokens as an array of numbers
- */
-function getArrayInput(n: number): number[] {
-    const arr: number[] = [];
-    for (let i = 0; i < n; i++) {
-        arr.push(getNumInput());
-    }
-    return arr;
-}
+// 2. Read one string
+const s: string = sc.next();
 
-function main(): void {
-    // 1. Read one number
-    const n: number = getNumInput();
-    if (isNaN(n)) return;
+// 3. Read array of n numbers
+const arr: number[] = sc.nextArray(n);
 
-    // 2. Read one string
-    const s: string = getStringInput();
-
-    // 3. Read array of n numbers
-    const arr: number[] = getArrayInput(n);
-
-    // Output values
-    console.log(\`Number: \${n}\`);
-    console.log(\`String: \${s}\`);
-    console.log(\`Array: \${arr.join(' ')}\`);
-}
-
-main();
+// Output values
+console.log(\`Number: \${n}\`);
+console.log(\`String: \${s}\`);
+console.log(\`Array: \${arr.join(' ')}\`);
 `;
 
 export const cBoiler = `#include <stdio.h>
 #include <stdlib.h>
 
 int main() {
+    // 1. Read one number
     int n;
     if (scanf("%d", &n) != 1) return 0;
 
+    // 2. Read one string
     char s[256];
     scanf("%255s", s);
 
+    // 3. Read array of n numbers
     int *arr = (int *)malloc(n * sizeof(int));
     for (int i = 0; i < n; i++) {
         scanf("%d", &arr[i]);
     }
 
+    // Output values
     printf("Number: %d\\n", n);
     printf("String: %s\\n", s);
     printf("Array: ");

@@ -72,6 +72,17 @@ const CodeEditor = ({
         }
         declare const require: (moduleName: string) => any;
         declare const process: any;
+        declare class Scanner {
+          constructor(input?: string);
+          hasNext(): boolean;
+          skipWhitespace(): void;
+          next(): string;
+          nextInt(): number;
+          nextFloat(): number;
+          nextBigInt(): bigint;
+          nextArray(n: number): number[];
+        }
+        declare function getIntInput(): number;
         declare function getNumInput(): number;
         declare function getStringInput(): string;
         declare function getArrayInput(n: number): number[];

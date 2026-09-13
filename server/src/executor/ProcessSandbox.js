@@ -51,8 +51,16 @@ export class ProcessSandbox {
             maxBuffer: 10 * 1024 * 1024,
           });
         } catch (compileErr) {
-          const compileOutput = compileErr.stderr || compileErr.stdout || compileErr.message;
-          logger.warn({ token, error: compileOutput.slice(0, 200) }, `❌ Compilation failed for [${language.name}]`);
+          let compileOutput = compileErr.stderr || compileErr.stdout || compileErr.message;
+          if (compileOutput && typeof compileOutput === 'string') {
+            const privScratch = scratchDir.startsWith('/var/') ? '/private' + scratchDir : scratchDir;
+            compileOutput = compileOutput
+              .replaceAll(privScratch + path.sep, '')
+              .replaceAll(privScratch, '')
+              .replaceAll(scratchDir + path.sep, '')
+              .replaceAll(scratchDir, '');
+          }
+          logger.warn({ token, error: (compileOutput || '').slice(0, 200) }, `❌ Compilation failed for [${language.name}]`);
           return {
             status: getStatusById(6), // Compilation Error
             stdout: null,
@@ -73,6 +81,19 @@ export class ProcessSandbox {
       const executionTime = Number(endTime - startTime) / 1e9; // in seconds
 
       const parsed = this.parser.parseExecutionResult(runResult);
+
+      const sanitizePaths = (text) => {
+        if (!text || typeof text !== 'string') return text;
+        const privScratch = scratchDir.startsWith('/var/') ? '/private' + scratchDir : scratchDir;
+        return text
+          .replaceAll(privScratch + path.sep, '')
+          .replaceAll(privScratch, '')
+          .replaceAll(scratchDir + path.sep, '')
+          .replaceAll(scratchDir, '');
+      };
+
+      if (parsed.stderr) parsed.stderr = sanitizePaths(parsed.stderr);
+      if (parsed.stdout) parsed.stdout = sanitizePaths(parsed.stdout);
 
       return {
         ...parsed,
