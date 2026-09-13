@@ -12,7 +12,7 @@ import SharedBanner from "../components/SharedBanner/SharedBanner";
 import AuthModal from "../components/Auth/AuthModal";
 import { LANGUAGES } from "../constants/languages";
 import { boilerCodes } from "../boilerCodes";
-import { submitCode, snippetsApi } from "../api";
+import { submitCode, snippetsApi, usersApi } from "../api";
 import { useAuth } from "../context/AuthContext";
 import {
   getSavedCode,
@@ -28,6 +28,7 @@ import {
   getTemplates,
   saveTemplate,
   deleteTemplate,
+  normalizeId,
 } from "../utils/storage";
 
 // Safe base64 decoding helper
@@ -70,6 +71,7 @@ function IdePage() {
 
   // Cloud snippet & sharing state
   const [cloudSnippet, setCloudSnippet] = useState(null);
+  const [currentProblem, setCurrentProblem] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isForking, setIsForking] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -83,6 +85,51 @@ function IdePage() {
   // Saved collections state
   const [savedProblems, setSavedProblems] = useState(() => getSavedProblems());
   const [templates, setTemplates] = useState(() => getTemplates());
+
+  // Load all templates and sync user's cloud snippets on mount or login
+  useEffect(() => {
+    // Always reload all available templates
+    setTemplates(getTemplates());
+
+    // If user is logged in, fetch cloud snippets and merge with saved codes
+    if (user?.username) {
+      usersApi
+        .getSnippets(user.username)
+        .then((cloudList) => {
+          if (!Array.isArray(cloudList)) return;
+          const localList = getSavedProblems();
+          const cloudItems = cloudList.map((s) => ({
+            id: s.snippetId,
+            name: s.title,
+            command: s.description?.startsWith("/") ? s.description : null,
+            languageId: s.languageId,
+            languageName: s.languageName,
+            code: s.code,
+            testCases: s.testCases || [],
+            updatedAt: new Date(s.updatedAt || s.createdAt).getTime(),
+            isCloud: true,
+            snippetId: s.snippetId,
+          }));
+
+          // Merge: cloud items and local items, avoiding duplicates by id
+          const map = new Map();
+          cloudItems.forEach((item) => map.set(item.id, item));
+          localList.forEach((item) => {
+            if (!map.has(item.id)) {
+              map.set(item.id, item);
+            }
+          });
+
+          const merged = Array.from(map.values()).sort(
+            (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)
+          );
+          setSavedProblems(merged);
+        })
+        .catch(() => {
+          // Fallback to local storage if network unavailable
+        });
+    }
+  }, [user]);
 
   const saveTimeoutRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -114,6 +161,12 @@ function IdePage() {
       try {
         const data = await snippetsApi.getById(snippetId);
         setCloudSnippet(data);
+        setCurrentProblem({
+          name: data.title,
+          command: data.description?.startsWith("/") ? data.description : null,
+          id: data.snippetId,
+          isCloud: true,
+        });
 
         // Find language matching snippet
         const matchedLang = LANGUAGES.find((l) => l.id === data.languageId) || language;
@@ -223,7 +276,12 @@ function IdePage() {
     const defaultBoiler = boilerCodes(language.id);
     setCode(defaultBoiler);
     saveCode(language.id, defaultBoiler);
+    setCurrentProblem(null);
+    setCloudSnippet(null);
     showToast(`Reset code to template for ${language.name}!`);
+    if (snippetId) {
+      navigate("/ide", { replace: true });
+    }
   };
 
   // Save to MongoDB Cloud
@@ -263,12 +321,23 @@ function IdePage() {
     try {
       const forked = await snippetsApi.fork(cloudSnippet.snippetId);
       setCloudSnippet(forked);
+      setCurrentProblem({
+        name: forked.title,
+        command: forked.description?.startsWith("/") ? forked.description : null,
+        id: forked.snippetId,
+        isCloud: true,
+      });
       setIsReadOnly(false);
       showToast(`Forked! You now have your own editable copy.`);
       navigate(`/s/${forked.snippetId}`, { replace: true });
     } catch (err) {
       // Local fallback fork
       setIsReadOnly(false);
+      setCurrentProblem({
+        name: `${cloudSnippet.title} (Fork)`,
+        command: null,
+        id: normalizeId(`${cloudSnippet.title}_fork`),
+      });
       showToast("Cloned code into your active editor!");
       navigate("/ide", { replace: true });
     } finally {
@@ -395,27 +464,89 @@ function IdePage() {
         setLanguage={handleLanguageChange}
         onRun={handleRunCode}
         onReset={() => setIsResetModalOpen(true)}
-        onOpenSaveModal={() => {
+        onOpenSaveModal={async () => {
           if (!user) {
             setIsAuthModalOpen(true);
             showToast("Please sign in with Google to save your code to cloud.", "info");
+            return;
+          }
+
+          // If already saved with name, quick-save directly!
+          if (currentProblem?.name || (cloudSnippet && cloudSnippet.author?.id === user.id)) {
+            const saveName = currentProblem?.name || cloudSnippet?.title || `${language.name} Solution`;
+            const saveCmd = currentProblem?.command || null;
+            const problemData = {
+              id: currentProblem?.id || (cloudSnippet ? normalizeId(cloudSnippet.title) : normalizeId(saveName)),
+              name: saveName,
+              command: saveCmd,
+              languageId: language.id,
+              languageName: language.name,
+              code,
+              testCases,
+            };
+
+            saveProblem(problemData);
+            setSavedProblems(getSavedProblems());
+
+            try {
+              const payload = {
+                title: saveName,
+                description: saveCmd || "",
+                languageId: language.id,
+                languageName: language.name,
+                code,
+                testCases,
+                isPublic: true,
+              };
+
+              if (cloudSnippet && cloudSnippet.author?.id === user.id) {
+                const updated = await snippetsApi.update(cloudSnippet.snippetId, payload);
+                setCloudSnippet(updated);
+                setCurrentProblem({ name: updated.title, command: saveCmd, id: updated.snippetId, isCloud: true });
+                showToast(`Saved changes to "${saveName}" on Cloud!`);
+              } else {
+                const created = await snippetsApi.create(payload);
+                setCloudSnippet(created);
+                setCurrentProblem({ name: created.title, command: saveCmd, id: created.snippetId, isCloud: true });
+                showToast(`Saved "${saveName}" to Cloud!`);
+                navigate(`/s/${created.snippetId}`, { replace: true });
+              }
+            } catch (err) {
+              showToast(`Saved "${saveName}" locally.`, "info");
+            }
           } else {
             setIsSaveModalOpen(true);
           }
         }}
         onShare={handleOpenShare}
-        activeSnippetId={cloudSnippet?.snippetId}
+        activeSnippetId={cloudSnippet?.snippetId || currentProblem?.id}
+        activeSnippetName={currentProblem?.name || cloudSnippet?.title || ""}
+        activeSnippetCommand={currentProblem?.command || (cloudSnippet?.description?.startsWith("/") ? cloudSnippet.description : "")}
+        cloudSnippet={cloudSnippet}
         savedProblems={savedProblems}
         onLoadProblem={(p) => {
           const matchedLang = LANGUAGES.find((l) => l.id === p.languageId) || language;
           setLanguage(matchedLang);
           setCode(p.code || "");
           setTestCases(p.testCases || []);
-          showToast(`Loaded "${p.name}" into editor!`);
+          setCurrentProblem({
+            name: p.name,
+            command: p.command || null,
+            id: p.id,
+            isCloud: !!p.isCloud,
+          });
+          if (p.isCloud && p.snippetId) {
+            navigate(`/s/${p.snippetId}`, { replace: true });
+          } else {
+            showToast(`Loaded "${p.name}" into editor!`);
+          }
         }}
         onDeleteProblem={(id) => {
           deleteProblem(id);
-          setSavedProblems(getSavedProblems());
+          setSavedProblems((prev) => prev.filter((p) => p.id !== id));
+          if (currentProblem?.id === id) {
+            setCurrentProblem(null);
+          }
           showToast("Snippet deleted.", "info");
         }}
         isRunning={isRunning}
@@ -497,15 +628,24 @@ function IdePage() {
       <SaveModal
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
+        initialName={currentProblem?.name || cloudSnippet?.title || ""}
+        initialCommand={currentProblem?.command || (cloudSnippet?.description?.startsWith("/") ? cloudSnippet.description : "")}
         onSave={async (data) => {
           const saved = saveProblem(data);
           if (saved) {
             setSavedProblems(getSavedProblems());
           }
+          setCurrentProblem({
+            name: data.name,
+            command: data.command || null,
+            id: data.id,
+            isCloud: !!user,
+          });
           if (user) {
             try {
               const payload = {
                 title: data.name || `${language.name} Solution`,
+                description: data.command || "",
                 languageId: data.languageId || language.id,
                 languageName: data.languageName || language.name,
                 code: data.code || code,
@@ -515,10 +655,22 @@ function IdePage() {
               if (cloudSnippet && cloudSnippet.author?.id === user.id) {
                 const updated = await snippetsApi.update(cloudSnippet.snippetId, payload);
                 setCloudSnippet(updated);
+                setCurrentProblem({
+                  name: updated.title,
+                  command: data.command || null,
+                  id: updated.snippetId,
+                  isCloud: true,
+                });
                 showToast(`Saved "${data.name}" to Cloud!`);
               } else {
                 const created = await snippetsApi.create(payload);
                 setCloudSnippet(created);
+                setCurrentProblem({
+                  name: created.title,
+                  command: data.command || null,
+                  id: created.snippetId,
+                  isCloud: true,
+                });
                 showToast(`Saved "${data.name}" to Cloud! (ID: ${created.snippetId})`);
                 navigate(`/s/${created.snippetId}`, { replace: true });
               }

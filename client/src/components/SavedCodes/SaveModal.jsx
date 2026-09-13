@@ -10,9 +10,18 @@ export const SaveModal = ({
   currentLanguage,
   code,
   testCases,
+  initialName = "",
+  initialCommand = "",
 }) => {
-  const [name, setName] = useState("");
-  const [command, setCommand] = useState("");
+  const [name, setName] = useState(initialName);
+  const [command, setCommand] = useState(initialCommand);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(initialName || "");
+      setCommand(initialCommand || "");
+    }
+  }, [isOpen, initialName, initialCommand]);
 
   const normalizedId = useMemo(() => normalizeId(name), [name]);
   const normalizedCmd = useMemo(() => (command.trim() ? normalizeCommand(command) : ""), [command]);

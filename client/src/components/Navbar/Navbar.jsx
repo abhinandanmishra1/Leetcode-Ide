@@ -10,6 +10,7 @@ import {
   faSearch,
   faTrash,
   faArrowRight,
+  faCloud,
   faCloudArrowUp,
   faShareNodes,
   faCompass,
@@ -32,6 +33,9 @@ const Navbar = ({
   onSaveToCloud,
   onShare,
   activeSnippetId,
+  activeSnippetName = "",
+  activeSnippetCommand = "",
+  cloudSnippet = null,
   savedProblems = [],
   onLoadProblem,
   onDeleteProblem,
@@ -65,12 +69,14 @@ const Navbar = ({
     if (!searchFilter.trim()) return true;
     const q = searchFilter.toLowerCase();
     return (
-      p.name.toLowerCase().includes(q) ||
-      p.id.toLowerCase().includes(q) ||
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.id && p.id.toLowerCase().includes(q)) ||
       (p.languageName && p.languageName.toLowerCase().includes(q)) ||
       (p.command && p.command.toLowerCase().includes(q))
     );
   });
+
+  const displayedProblems = filteredProblems.slice(0, 10);
 
   return (
     <div className="bg-[#282828] border-b border-[#3e3e3e] px-4 py-2 flex items-center justify-between gap-3 select-none flex-shrink-0 h-[50px] relative z-40">
@@ -103,14 +109,39 @@ const Navbar = ({
 
         {/* Combined Local Save Button + Dropdown */}
         <div className="relative inline-flex items-center" ref={dropdownRef}>
-          <Tooltip content="Save snippet (Ctrl + S)" side="bottom">
+          <Tooltip
+            content={
+              activeSnippetName
+                ? `Save changes to "${activeSnippetName}" ${
+                    activeSnippetCommand ? `(${activeSnippetCommand})` : ""
+                  } (Ctrl + S)`
+                : "Save snippet to cloud (Ctrl + S)"
+            }
+            side="bottom"
+          >
             <button
               type="button"
               onClick={onOpenSaveModal}
-              className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-l-md transition-colors"
+              className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-l-md transition-colors"
             >
               <FontAwesomeIcon icon={faFloppyDisk} className="text-xs text-[#ffa116]" />
-              <span className="font-semibold hidden sm:inline">Save</span>
+              <span className="font-semibold">Save</span>
+              {activeSnippetName && (
+                <>
+                  <span className="text-gray-500 text-[11px]">|</span>
+                  <span
+                    className="font-medium text-white max-w-[70px] sm:max-w-[110px] md:max-w-[150px] truncate"
+                    title={activeSnippetName}
+                  >
+                    {activeSnippetName}
+                  </span>
+                  {activeSnippetCommand && (
+                    <span className="text-[#ffa116] bg-[#ffa116]/10 border border-[#ffa116]/30 px-1 py-0.2 rounded font-mono text-[10px] hidden sm:inline">
+                      {activeSnippetCommand}
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           </Tooltip>
 
@@ -129,11 +160,11 @@ const Navbar = ({
 
           {/* Local Saved Codes Dropdown Menu */}
           {dropdownOpen && (
-            <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-[#222222] border border-[#3e3e3e] rounded-lg shadow-2xl z-50 overflow-hidden text-xs text-gray-200 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-84 bg-[#222222] border border-[#3e3e3e] rounded-lg shadow-2xl z-50 overflow-hidden text-xs text-gray-200 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-2 bg-[#1c1c1c] border-b border-[#333333] flex items-center justify-between">
-                <span className="font-semibold text-white">Local Saved Codes</span>
+                <span className="font-semibold text-white">Saved Codes</span>
                 <span className="bg-[#2e2e2e] text-gray-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
-                  {savedProblems.length}
+                  {displayedProblems.length} of {savedProblems.length}
                 </span>
               </div>
 
@@ -153,15 +184,15 @@ const Navbar = ({
                 </div>
               </div>
 
-              <div className="max-h-60 overflow-y-auto divide-y divide-[#2d2d2d]">
-                {filteredProblems.length === 0 ? (
+              <div className="max-h-64 overflow-y-auto divide-y divide-[#2d2d2d]">
+                {displayedProblems.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-[11px]">
                     {savedProblems.length === 0
                       ? "No saved codes yet."
                       : "No matching codes found."}
                   </div>
                 ) : (
-                  filteredProblems.map((problem) => (
+                  displayedProblems.map((problem) => (
                     <div
                       key={problem.id}
                       className="p-2.5 hover:bg-[#2a2a2a] transition-colors flex items-center justify-between gap-2 group"
@@ -177,9 +208,16 @@ const Navbar = ({
                           <span className="font-medium text-white truncate text-[12px] group-hover:text-[#ffa116] transition-colors">
                             {problem.name}
                           </span>
-                          <code className="text-[10px] bg-[#1a1a1a] text-gray-400 px-1 py-0.2 rounded font-mono">
-                            {problem.id}
-                          </code>
+                          {problem.command && (
+                            <span className="text-[10px] bg-[#ffa116]/10 text-[#ffa116] border border-[#ffa116]/30 px-1 py-0.2 rounded font-mono">
+                              {problem.command}
+                            </span>
+                          )}
+                          {problem.isCloud && (
+                            <span className="text-[10px] bg-sky-950/60 text-[#00b4d8] border border-sky-800/40 px-1 py-0.2 rounded font-mono">
+                              cloud
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5 flex items-center space-x-2">
                           <span>{problem.languageName || "C++"}</span>
@@ -215,9 +253,39 @@ const Navbar = ({
                   ))
                 )}
               </div>
+
+              {filteredProblems.length > 10 && (
+                <div className="px-3 py-1.5 text-center text-[10px] text-gray-500 bg-[#1a1a1a] border-t border-[#2d2d2d]">
+                  Showing top 10 results (use search above to filter)
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Cloud Saved Snippet Author Badge */}
+        {cloudSnippet && cloudSnippet.author && (
+          <Tooltip
+            content={`Saved on Cloud by @${cloudSnippet.author.username}${
+              user && cloudSnippet.author.id === user.id ? " (You)" : ""
+            }`}
+            side="bottom"
+          >
+            <Link
+              to={`/u/${cloudSnippet.author.username}`}
+              className="hidden sm:flex items-center space-x-1 px-2 py-1 text-xs text-gray-300 hover:text-white bg-[#222222] hover:bg-[#2b2b2b] border border-[#3e3e3e] rounded-md transition-colors"
+            >
+              <FontAwesomeIcon icon={faCloud} className="text-[#00b4d8] text-[10px]" />
+              <span className="text-gray-400 text-[11px]">by</span>
+              <span className="text-[#ffa116] font-medium text-[11px]">
+                @{cloudSnippet.author.username}
+              </span>
+              {user && cloudSnippet.author.id === user.id && (
+                <span className="text-[10px] text-gray-400 font-mono">(You)</span>
+              )}
+            </Link>
+          </Tooltip>
+        )}
 
         {/* Share Button */}
         {onShare && (

@@ -103,9 +103,11 @@ router.get('/:username/snippets', async (req, res) => {
         languageId: s.languageId,
         languageName: s.languageName,
         code: s.code,
+        testCases: s.testCases || [],
         viewsCount: s.viewsCount || 0,
         forksCount: s.forksCount || 0,
         createdAt: s.createdAt,
+        updatedAt: s.updatedAt || s.createdAt,
         author: {
           id: user._id.toString(),
           name: user.name,
