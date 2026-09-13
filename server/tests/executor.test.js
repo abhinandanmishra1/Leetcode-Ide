@@ -104,3 +104,44 @@ int main() {
   assert.strictEqual(result.stdout.trim(), 'Final counter: 3');
   assert.strictEqual(result.exit_code, 0);
 });
+
+test('executor compiles and runs Java with public class Main', async () => {
+  const javaCode = `
+import java.util.*;
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Java Main Works!");
+    }
+}
+`;
+  const submission = {
+    token: 'test-java-main-exec',
+    source_code: javaCode,
+    language: getLanguageById(62),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'Java Main Works!');
+  assert.strictEqual(result.exit_code, 0);
+});
+
+test('executor compiles and runs Java with public class Solution', async () => {
+  const javaCode = `
+public class Solution {
+    public static void main(String[] args) {
+        System.out.println("Java Solution Works!");
+    }
+}
+`;
+  const submission = {
+    token: 'test-java-solution-exec',
+    source_code: javaCode,
+    language: getLanguageById(62),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'Java Solution Works!');
+  assert.strictEqual(result.exit_code, 0);
+});

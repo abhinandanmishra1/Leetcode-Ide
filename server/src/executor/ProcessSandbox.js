@@ -24,17 +24,30 @@ export class ProcessSandbox {
     const scratchDir = path.join(os.tmpdir(), 'codebox', token);
     await fs.mkdir(scratchDir, { recursive: true });
 
-    const sourcePath = path.join(scratchDir, language.source_file);
-    await fs.writeFile(sourcePath, source_code || '', 'utf-8');
+    let sourceFile = language.source_file;
+    let compileCmd = language.compile_cmd;
+    let runCmd = language.run_cmd;
+    let codeToWrite = source_code || '';
+
+    if (typeof language.resolve === 'function') {
+      const resolved = language.resolve(codeToWrite);
+      if (resolved.source_file) sourceFile = resolved.source_file;
+      if (resolved.compile_cmd) compileCmd = resolved.compile_cmd;
+      if (resolved.run_cmd) runCmd = resolved.run_cmd;
+      if (resolved.source_code !== undefined) codeToWrite = resolved.source_code;
+    }
+
+    const sourcePath = path.join(scratchDir, sourceFile);
+    await fs.writeFile(sourcePath, codeToWrite, 'utf-8');
 
     try {
       // 1. Compilation phase if required
-      if (language.compile_cmd) {
-        logger.info({ token, compile_cmd: language.compile_cmd }, `🔨 Compiling [${language.name}]...`);
+      if (compileCmd) {
+        logger.info({ token, compile_cmd: compileCmd }, `🔨 Compiling [${language.name}]...`);
         try {
-          await execAsync(language.compile_cmd, {
+          await execAsync(compileCmd, {
             cwd: scratchDir,
-            timeout: timeoutMs + 2000,
+            timeout: Math.max(15000, timeoutMs + 5000),
             maxBuffer: 10 * 1024 * 1024,
           });
         } catch (compileErr) {
@@ -53,9 +66,9 @@ export class ProcessSandbox {
       }
 
       // 2. Execution phase with resource limits and stdin
-      logger.info({ token, run_cmd: language.run_cmd, timeout: `${timeoutSeconds}s` }, `🚀 Executing [${language.name}]...`);
+      logger.info({ token, run_cmd: runCmd, timeout: `${timeoutSeconds}s` }, `🚀 Executing [${language.name}]...`);
       const startTime = process.hrtime.bigint();
-      const runResult = await this.runProcess(language.run_cmd, scratchDir, stdin || '', timeoutMs);
+      const runResult = await this.runProcess(runCmd, scratchDir, stdin || '', timeoutMs);
       const endTime = process.hrtime.bigint();
       const executionTime = Number(endTime - startTime) / 1e9; // in seconds
 
