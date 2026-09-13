@@ -385,10 +385,10 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
       </section>
 
       {/* Interactive Code Demo Card */}
-      <section className="px-4 sm:px-8 max-w-5xl mx-auto -mt-6">
+      <section className="relative z-10 px-4 sm:px-8 max-w-5xl mx-auto -mt-6">
         <div className="bg-[#1e1e1e] border border-[#3a3a3a] rounded-2xl shadow-2xl overflow-hidden">
           {/* Card Window Header */}
-          <div className="bg-[#262626] px-4 py-3 border-b border-[#333333] flex items-center justify-between">
+          <div className="bg-[#222222] px-4 py-3 border-b border-[#333333] flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center space-x-2">
               <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
               <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
@@ -397,15 +397,17 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
             </div>
 
             {/* Language Switcher Tabs */}
-            <div className="flex items-center space-x-1 bg-[#1a1a1a] p-1 rounded-lg text-xs font-mono">
+            <div className="flex items-center space-x-1 bg-[#161616] p-1 rounded-lg text-xs font-mono border border-[#333333]">
               <button
                 type="button"
                 onClick={() => {
                   setDemoCodeLang("cpp");
                   setDemoOutput("Click 'Run Demo' to execute in sandbox...");
                 }}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  demoCodeLang === "cpp" ? "bg-[#333333] text-[#ffa116] font-semibold shadow-sm" : "text-gray-400 hover:text-white"
+                className={`px-3 py-1 rounded-md transition-all ${
+                  demoCodeLang === "cpp"
+                    ? "bg-[#2d2d2d] text-[#ffa116] font-semibold shadow-sm"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 C++
@@ -416,8 +418,10 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
                   setDemoCodeLang("python");
                   setDemoOutput("Click 'Run Demo' to execute in sandbox...");
                 }}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  demoCodeLang === "python" ? "bg-[#333333] text-[#ffa116] font-semibold shadow-sm" : "text-gray-400 hover:text-white"
+                className={`px-3 py-1 rounded-md transition-all ${
+                  demoCodeLang === "python"
+                    ? "bg-[#2d2d2d] text-[#ffa116] font-semibold shadow-sm"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 Python
@@ -428,8 +432,10 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
                   setDemoCodeLang("javascript");
                   setDemoOutput("Click 'Run Demo' to execute in sandbox...");
                 }}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  demoCodeLang === "javascript" ? "bg-[#333333] text-[#ffa116] font-semibold shadow-sm" : "text-gray-400 hover:text-white"
+                className={`px-3 py-1 rounded-md transition-all ${
+                  demoCodeLang === "javascript"
+                    ? "bg-[#2d2d2d] text-[#ffa116] font-semibold shadow-sm"
+                    : "text-gray-400 hover:text-white"
                 }`}
               >
                 JavaScript
@@ -440,7 +446,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
               type="button"
               onClick={handleRunDemo}
               disabled={demoRunning}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#ffa116] hover:bg-[#e08d0e] text-black text-xs font-bold rounded-md transition-all shadow"
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ffa116] hover:bg-[#e08d0e] active:scale-95 text-black text-xs font-bold rounded-lg transition-all shadow"
             >
               {demoRunning ? (
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
