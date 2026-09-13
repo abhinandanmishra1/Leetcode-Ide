@@ -5,13 +5,14 @@ import logger from '../utils/logger.js';
 import submissionsRouter from './routes/submissions.js';
 import languagesRouter from './routes/languages.js';
 import healthRouter from './routes/health.js';
-import requestLogger from './middleware/requestLogger.js';
 import { initializeQueue, closeQueue } from '../queue/producer.js';
 import { startWorker, stopWorker } from '../queue/worker.js';
+import { connectDB, disconnectDB } from '../db/connection.js';
 
 let serverInstance = null;
 
 export async function startServer(port = config.port) {
+  await connectDB();
   await initializeQueue();
   await startWorker();
 
@@ -63,6 +64,7 @@ export async function stopServer() {
   }
   await stopWorker();
   await closeQueue();
+  await disconnectDB();
 }
 
 export default {
