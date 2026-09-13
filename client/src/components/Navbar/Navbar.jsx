@@ -4,15 +4,14 @@ import {
   faPlay,
   faSpinner,
   faRotateLeft,
-  faCode,
   faFloppyDisk,
   faChevronDown,
   faSearch,
   faTrash,
   faArrowRight,
-  faBolt,
 } from "@fortawesome/free-solid-svg-icons";
 import LanguageDropdown from "../Dropdowns/LanguageDropdown";
+import { CodePadBrand } from "../Brand/CodePadLogo";
 
 const Navbar = ({
   language,
@@ -58,15 +57,7 @@ const Navbar = ({
   return (
     <div className="bg-[#282828] border-b border-[#3e3e3e] px-4 py-2 flex items-center justify-between gap-3 select-none flex-shrink-0 h-[50px] relative z-40">
       {/* Brand Title */}
-      <div className="flex items-center space-x-2 text-white font-semibold tracking-wide text-base flex-shrink-0">
-        <span className="text-[#ffa116] text-xl">
-          <FontAwesomeIcon icon={faCode} />
-        </span>
-        <span className="text-gray-200 font-sans tracking-tight font-bold hidden sm:inline">LeetCode</span>
-        <span className="text-[11px] bg-[#3a3a3a] text-gray-300 font-mono px-1.5 py-0.5 rounded font-medium">
-          IDE
-        </span>
-      </div>
+      <CodePadBrand />
 
       {/* Center Controls: Language Selector, Unified Save Dropdown, Reset */}
       <div className="flex items-center space-x-2 sm:space-x-3">
