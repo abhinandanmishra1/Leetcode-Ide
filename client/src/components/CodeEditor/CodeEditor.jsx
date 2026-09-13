@@ -66,12 +66,12 @@ const CodeEditor = ({
     });
   };
 
-  // Re-register or update templates when getAllTemplates changes
+  // Re-register or update templates when getAllTemplates or language changes
   useEffect(() => {
     if (monacoRef.current && getAllTemplates) {
       registerMonacoTemplates(monacoRef.current, getAllTemplates);
     }
-  }, [getAllTemplates]);
+  }, [getAllTemplates, language?.id]);
 
   return (
     <div className="flex flex-col h-full w-full bg-[#1e1e1e] overflow-hidden">

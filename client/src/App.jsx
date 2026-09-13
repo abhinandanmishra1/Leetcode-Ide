@@ -5,7 +5,6 @@ import Navbar from "./components/Navbar/Navbar";
 import SplitPane from "./components/SplitPane/SplitPane";
 import SaveModal from "./components/SavedCodes/SaveModal";
 import SnippetLibraryModal from "./components/Templates/SnippetLibraryModal";
-import DEFAULT_TEMPLATES from "./components/Templates/defaultTemplates";
 import { LANGUAGES } from "./constants/languages";
 import { boilerCodes } from "./boilerCodes";
 import { submitCode } from "./api";
@@ -20,8 +19,9 @@ import {
   getSavedProblems,
   saveProblem,
   deleteProblem,
-  getCustomTemplates,
-  saveCustomTemplate,
+  getTemplates,
+  saveTemplate,
+  deleteTemplate,
 } from "./utils/storage";
 
 // Safe base64 decoding helper
@@ -64,7 +64,7 @@ function App() {
 
   // Saved collections state
   const [savedProblems, setSavedProblems] = useState(() => getSavedProblems());
-  const [customTemplates, setCustomTemplates] = useState(() => getCustomTemplates());
+  const [templates, setTemplates] = useState(() => getTemplates());
 
   const saveTimeoutRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -76,13 +76,11 @@ function App() {
     }
   }, [testCases, activeCaseId]);
 
-  // Combine default templates and custom templates
-  const getAllTemplates = useCallback(() => {
-    const map = new Map();
-    DEFAULT_TEMPLATES.forEach((t) => map.set(t.command, t));
-    customTemplates.forEach((t) => map.set(t.command, t));
-    return Array.from(map.values());
-  }, [customTemplates]);
+  // Get snippets scoped to the target language (or current language)
+  const getAllTemplates = useCallback((langId) => {
+    const targetId = langId || language?.id;
+    return templates.filter((t) => !t.languageId || t.languageId === targetId);
+  }, [templates, language?.id]);
 
   // Show temporary toast notification
   const showToast = (message, type = "success") => {
@@ -173,19 +171,27 @@ function App() {
       setSavedProblems(getSavedProblems());
 
       if (problemData.command) {
-        saveCustomTemplate({
+        saveTemplate({
           command: problemData.command,
           name: problemData.name,
           description: `Custom snippet for ${problemData.name}`,
+          languageId: problemData.languageId,
+          languageName: problemData.languageName,
           code: problemData.code,
-          isCustom: true,
         });
-        setCustomTemplates(getCustomTemplates());
-        showToast(`Saved "${saved.name}" with command ${problemData.command}!`);
+        setTemplates(getTemplates());
+        showToast(`Saved "${saved.name}" (${problemData.command}) for ${problemData.languageName}!`);
       } else {
         showToast(`Saved "${saved.name}" (ID: ${saved.id})!`);
       }
     }
+  };
+
+  // Permanently delete a snippet/template
+  const handleDeleteSnippet = (command, languageId) => {
+    deleteTemplate(command, languageId);
+    setTemplates(getTemplates());
+    showToast(`Deleted snippet "${command}".`, "info");
   };
 
   // Load a saved problem into the active workspace
@@ -448,8 +454,10 @@ function App() {
       <SnippetLibraryModal
         isOpen={isSnippetsModalOpen}
         onClose={() => setIsSnippetsModalOpen(false)}
-        allSnippets={getAllTemplates()}
+        allSnippets={getAllTemplates(language?.id)}
+        currentLanguage={language}
         onInsertSnippet={handleInsertTemplate}
+        onDeleteSnippet={handleDeleteSnippet}
       />
     </div>
   );
