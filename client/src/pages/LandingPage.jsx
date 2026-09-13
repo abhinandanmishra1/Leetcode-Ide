@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlay,
   faBolt,
-  faShieldHalved,
   faCloud,
   faShareNodes,
   faUsers,
@@ -16,6 +15,7 @@ import {
   faHeart,
   faCodeBranch,
   faCodeFork,
+  faFlask,
 } from "@fortawesome/free-solid-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
@@ -34,44 +34,102 @@ const FEATURE_CARDS = [
   {
     icon: faBolt,
     iconColor: "text-[#ffa116]",
-    title: "Sub-Second Sandbox Execution",
+    title: "Fast Code Execution",
     description:
-      "Powered by an asynchronous BullMQ queue and isolated runners. Compile and execute with immediate feedback.",
+      "Write and run code with quick feedback. Backed by an async job queue so compilations never block.",
   },
   {
-    icon: faShieldHalved,
+    icon: faCodeBranch,
     iconColor: "text-[#2cbb5d]",
-    title: "Hardened Ephemeral Security",
+    title: "Code Snippets",
     description:
-      "Strict memory caps (256MB), 5s CPU timeouts, non-root jail execution, and multi-tier AST heuristic defense.",
+      "Save solutions as snippets in seconds. Organize, tag, and revisit your code anytime — building a personal library as you go.",
   },
   {
     icon: faCloud,
     iconColor: "text-[#00b4d8]",
-    title: "Persistent Codes",
+    title: "Persistent Code",
     description:
-      "Save your algorithms, test suites, and notes permanently on the cloud. Access your portfolio anywhere with unique URLs.",
+      "Save solutions, test cases, and notes to the cloud. Access them from anywhere with a unique URL.",
   },
   {
     icon: faShareNodes,
     iconColor: "text-[#a855f7]",
-    title: "1-Click Read-Only Sharing",
+    title: "Shareable Solutions",
     description:
-      "Share solutions with unique short URLs. Viewers can inspect code, run tests live in sandbox, and fork with 1 click.",
+      "Generate a short link for any solution. Viewers can read the code, run it live, and fork it.",
   },
   {
     icon: faUsers,
     iconColor: "text-[#f43f5e]",
-    title: "Profiles & Social Following",
+    title: "Developer Profiles",
     description:
-      "Claim your unique developer handle, follow competitive coders, and discover community algorithms.",
+      "Claim your handle, build a public profile with your saved solutions, and follow other developers.",
   },
   {
-    icon: faTerminal,
+    icon: faFlask,
     iconColor: "text-[#eab308]",
-    title: "Multi-Case Test Runner",
+    title: "Custom Test Cases",
     description:
-      "Configure up to 8 test cases with expected outputs. Compare expected vs actual outputs with exact line diffing.",
+      "Add multiple test cases with expected outputs. Compare results side-by-side with line-level diffing.",
+  },
+];
+
+// Fallback snippet data when the API returns fewer than 6 snippets
+const FALLBACK_SNIPPETS = [
+  {
+    id: "fb-1",
+    snippetId: "two-sum",
+    title: "Two Sum",
+    description: "Hash map approach — O(n) time, O(n) space",
+    languageName: "C++",
+    forksCount: 12,
+    author: { username: "alex", name: "Alex" },
+  },
+  {
+    id: "fb-2",
+    snippetId: "lru-cache",
+    title: "LRU Cache",
+    description: "Doubly linked list + hash map for O(1) get/put",
+    languageName: "Python",
+    forksCount: 8,
+    author: { username: "priya", name: "Priya" },
+  },
+  {
+    id: "fb-3",
+    snippetId: "dijkstra",
+    title: "Dijkstra's Shortest Path",
+    description: "Priority-queue implementation for weighted graphs",
+    languageName: "Java",
+    forksCount: 5,
+    author: { username: "marco", name: "Marco" },
+  },
+  {
+    id: "fb-4",
+    snippetId: "binary-search",
+    title: "Binary Search",
+    description: "Iterative lower-bound search on sorted arrays",
+    languageName: "Rust",
+    forksCount: 3,
+    author: { username: "sana", name: "Sana" },
+  },
+  {
+    id: "fb-5",
+    snippetId: "merge-sort",
+    title: "Merge Sort",
+    description: "Recursive divide-and-conquer, stable O(n log n)",
+    languageName: "Go",
+    forksCount: 6,
+    author: { username: "lee", name: "Lee" },
+  },
+  {
+    id: "fb-6",
+    snippetId: "valid-parentheses",
+    title: "Valid Parentheses",
+    description: "Stack-based bracket matching",
+    languageName: "JavaScript",
+    forksCount: 4,
+    author: { username: "nina", name: "Nina" },
   },
 ];
 
@@ -97,16 +155,20 @@ function LandingPage() {
       .catch(() => {});
   }, []);
 
-  // Load trending public snippets
+  // Load trending public snippets, fall back to placeholder data
   useEffect(() => {
     snippetsApi
-      .getPublic({ limit: 3, sort: "popular" })
+      .getPublic({ limit: 6, sort: "popular" })
       .then((res) => {
         if (res.snippets && res.snippets.length > 0) {
           setTrendingSnippets(res.snippets);
+        } else {
+          setTrendingSnippets(FALLBACK_SNIPPETS);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setTrendingSnippets(FALLBACK_SNIPPETS);
+      });
   }, []);
 
   const demoCodes = {
@@ -231,6 +293,9 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
     navigate("/ide");
   };
 
+  // Choose how many snippet cards to show (max 6, responsive grid)
+  const displayedSnippets = trendingSnippets.slice(0, 6);
+
   return (
     <div className="min-h-screen bg-[#141414] text-gray-200 selection:bg-[#ffa116] selection:text-black">
       {/* Top Navigation */}
@@ -247,7 +312,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
               Features
             </a>
             <Link to="/explore" className="hover:text-white transition-colors">
-              Explore Community
+              Explore
             </Link>
             <a
               href={`${GITHUB_REPO_URL}/blob/main/CONTRIBUTING.md`}
@@ -322,69 +387,50 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-16 pb-20 px-4 sm:px-8 overflow-hidden bg-gradient-to-b from-[#1c1c1c] via-[#141414] to-[#141414]">
+      {/* ─── Hero Section ─── */}
+      <section className="relative pt-20 pb-24 px-4 sm:px-8 overflow-hidden bg-gradient-to-b from-[#1c1c1c] via-[#141414] to-[#141414]">
         <div className="max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center space-x-2 bg-[#252525] border border-[#3e3e3e] px-3.5 py-1.5 rounded-full text-xs text-gray-300 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2cbb5d] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2cbb5d]"></span>
-            </span>
-            <span>Now with Persistent Codes, Google OAuth & Community Explore</span>
-          </div>
-
           <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-tight">
-            Build, Test & Share <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#ffa116] via-[#ffc04d] to-[#2cbb5d]">
-              LeetCode-Style Algorithms
-            </span>
+            Code. Test. Share.
           </h1>
 
           <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            The ultra-fast online coding playground. Compile and execute across C++, Python, Java, JavaScript, Rust,
-            and Go with isolated sandboxes, live test cases, and 1-click shareable URLs.
+            A fast coding playground for algorithmic problem solving. Write, run, test, save, and
+            share solutions across C++, Java, Python, JavaScript, Rust, and Go.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               to="/ide"
               className="flex items-center space-x-2 px-6 py-3 bg-[#ffa116] hover:bg-[#e08d0e] text-black text-sm font-bold rounded-xl shadow-lg transition-all active:scale-95 hover:shadow-[#ffa116]/20"
             >
-              <FontAwesomeIcon icon={faPlay} />
-              <span>Launch IDE Playground</span>
+              <span>Start Coding</span>
+              <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
             </Link>
             <Link
               to="/explore"
               className="flex items-center space-x-2 px-6 py-3 bg-[#262626] hover:bg-[#303030] border border-[#3e3e3e] text-white text-sm font-semibold rounded-xl transition-all"
             >
               <FontAwesomeIcon icon={faCompass} className="text-[#ffa116]" />
-              <span>Explore Community Snippets</span>
+              <span>Explore Snippets</span>
             </Link>
           </div>
 
-          {/* Quick Stats Banner */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-10 text-center border-t border-[#2d2d2d]">
-            <div>
-              <div className="text-2xl font-bold text-white">6+</div>
-              <div className="text-xs text-gray-500">Core Compilers</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#2cbb5d]">0ms</div>
-              <div className="text-xs text-gray-500">Local Latency</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#ffa116]">1-Click</div>
-              <div className="text-xs text-gray-500">Instant Sharing</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-[#00b4d8]">100%</div>
-              <div className="text-xs text-gray-500">Ephemeral Sandboxed</div>
-            </div>
+          {/* Language chips */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-6">
+            {["C++", "Java", "Python", "JavaScript", "Rust", "Go"].map((lang) => (
+              <span
+                key={lang}
+                className="px-3 py-1 text-xs font-mono text-gray-400 bg-[#1e1e1e] border border-[#2d2d2d] rounded-full"
+              >
+                {lang}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Interactive Code Demo Card */}
+      {/* ─── Interactive Code Demo Card ─── */}
       <section className="relative z-10 px-4 sm:px-8 max-w-5xl mx-auto -mt-6">
         <div className="bg-[#1e1e1e] border border-[#3a3a3a] rounded-2xl shadow-2xl overflow-hidden">
           {/* Card Window Header */}
@@ -494,7 +540,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5 flex-shrink-0">
                   <FontAwesomeIcon icon={faTerminal} className="text-[#ffa116]" />
-                  <span>Execution Output Console</span>
+                  <span>Output</span>
                 </div>
                 <div className="bg-[#1c1c1c] p-3 rounded-lg border border-[#2d2d2d] text-gray-300 flex-1 overflow-y-auto whitespace-pre-wrap font-mono text-[11px]">
                   {demoOutput}
@@ -516,12 +562,14 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 px-4 sm:px-8 max-w-7xl mx-auto">
+      {/* ─── Features Grid ─── */}
+      <section id="features" className="py-28 px-4 sm:px-8 max-w-7xl mx-auto">
         <div className="text-center space-y-3 mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Everything You Need To Solve & Share</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
+            Everything you need to solve and share
+          </h2>
           <p className="text-gray-400 text-sm max-w-xl mx-auto">
-            Engineered specifically for algorithmic problem solving, contest practice, and developer collaboration.
+            A focused toolkit for writing, running, and collaborating on algorithmic solutions.
           </p>
         </div>
 
@@ -541,71 +589,73 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
         </div>
       </section>
 
-      {/* Trending Community Snippets */}
-      {trendingSnippets.length > 0 && (
-        <section className="py-20 px-4 sm:px-8 max-w-7xl mx-auto space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Trending Community Snippets</h2>
-              <p className="text-xs text-gray-400 mt-1">Recently saved and popular algorithms from developers.</p>
-            </div>
-            <Link to="/explore" className="text-xs text-[#ffa116] hover:underline font-semibold flex items-center space-x-1">
-              <span>View All</span>
-              <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-            </Link>
+      {/* ─── Community Snippets ─── */}
+      <section className="py-20 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 border-t border-[#222222]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">See how others solve it</h2>
+            <p className="text-xs text-gray-400 mt-1">
+              Browse solutions shared by the community — pick a problem, read the code, run it.
+            </p>
           </div>
+          <Link to="/explore" className="text-xs text-[#ffa116] hover:underline font-semibold flex items-center space-x-1">
+            <span>View All</span>
+            <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+          </Link>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {trendingSnippets.map((s) => (
-              <div
-                key={s.id}
-                onClick={() => navigate(`/s/${s.snippetId}`)}
-                className="bg-[#1c1c1c] border border-[#2d2d2d] hover:border-[#3e3e3e] rounded-xl p-4 cursor-pointer transition-all hover:bg-[#222222] flex flex-col justify-between space-y-3"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1c2c22] text-[#2cbb5d] border border-[#2cbb5d]/30">
-                      {s.languageName}
-                    </span>
-                    <span className="flex items-center space-x-1 text-[11px] text-gray-400" title={`${s.forksCount || 0} forks`}>
-                      <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
-                      <span>{s.forksCount || 0}</span>
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-bold text-white line-clamp-1">{s.title}</h3>
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{s.description || "Community solution"}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {displayedSnippets.map((s) => (
+            <div
+              key={s.id}
+              onClick={() => navigate(`/s/${s.snippetId}`)}
+              className="bg-[#1c1c1c] border border-[#2d2d2d] hover:border-[#3e3e3e] rounded-xl p-4 cursor-pointer transition-all hover:bg-[#222222] flex flex-col justify-between space-y-3"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1c2c22] text-[#2cbb5d] border border-[#2cbb5d]/30">
+                    {s.languageName}
+                  </span>
+                  <span className="flex items-center space-x-1 text-[11px] text-gray-400" title={`${s.forksCount || 0} forks`}>
+                    <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
+                    <span>{s.forksCount || 0}</span>
+                  </span>
                 </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-[#282828] text-xs">
-                  <div className="flex items-center space-x-2 text-gray-400">
-                    <UserAvatar
-                      avatar={s.author?.avatar}
-                      name={s.author?.name}
-                      username={s.author?.username}
-                      size="xs"
-                    />
-                    <span className="text-[11px]">@{s.author?.username || "anonymous"}</span>
-                  </div>
-                  <span className="text-[#ffa116] text-xs font-semibold">Open & Run →</span>
-                </div>
+                <h3 className="text-sm font-bold text-white line-clamp-1">{s.title}</h3>
+                {s.description && (
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{s.description}</p>
+                )}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* Support & Contribute Section (Replaces Ready to Code) */}
-      <section className="py-20 px-4 sm:px-8 text-center bg-gradient-to-b from-[#141414] to-[#1c1c1c] border-t border-[#262626]">
+              <div className="flex items-center justify-between pt-3 border-t border-[#282828] text-xs">
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <UserAvatar
+                    avatar={s.author?.avatar}
+                    name={s.author?.name}
+                    username={s.author?.username}
+                    size="xs"
+                  />
+                  <span className="text-[11px]">@{s.author?.username || "anonymous"}</span>
+                </div>
+                <span className="text-[#ffa116] text-xs font-semibold">Open →</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Open Source Section ─── */}
+      <section className="py-24 px-4 sm:px-8 text-center bg-gradient-to-b from-[#141414] to-[#1c1c1c] border-t border-[#262626]">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-[#252525] border border-[#3e3e3e] rounded-full text-xs text-[#ffa116]">
             <FontAwesomeIcon icon={faHeart} className="text-red-500" />
-            <span>Open Source & Community Driven</span>
+            <span>Open Source</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Support & Contribute to CodePad</h2>
-          <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-            CodePad is free and open-source. Help us build the ultimate algorithmic playground by starring the
-            repository on GitHub, submitting PRs, or suggesting new compiler features.
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Built in the open</h2>
+          <p className="text-xs sm:text-sm text-gray-400 leading-relaxed max-w-lg mx-auto">
+            CodePad is free and open source. Star the repository, contribute improvements, and help
+            shape what comes next.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -616,7 +666,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
               className="flex items-center space-x-2 px-6 py-3 bg-[#ffa116] hover:bg-[#e08d0e] text-black font-bold text-sm rounded-xl shadow-lg transition-all active:scale-95"
             >
               <FontAwesomeIcon icon={faStar} />
-              <span>Star on GitHub {githubStars !== null && `(${githubStars})`}</span>
+              <span>Star on GitHub{githubStars !== null && ` (${githubStars})`}</span>
             </a>
 
             <a
@@ -626,7 +676,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
               className="flex items-center space-x-2 px-6 py-3 bg-[#262626] hover:bg-[#303030] border border-[#3e3e3e] text-white text-sm font-semibold rounded-xl transition-all"
             >
               <FontAwesomeIcon icon={faCodeBranch} className="text-[#2cbb5d]" />
-              <span>Contribute Code</span>
+              <span>Contribute on GitHub</span>
             </a>
 
             <Link
@@ -640,11 +690,11 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ─── Footer ─── */}
       <footer className="py-8 px-4 sm:px-8 bg-[#111111] border-t border-[#222222] text-xs text-gray-500 text-center">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <CodePadBrand />
-          <div>CodePad • Cloud Sandboxed Multi-Language Playground & Social Hub</div>
+          <div>CodePad · Coding playground for building, testing &amp; sharing solutions</div>
           <div className="flex items-center space-x-4">
             <a
               href={GITHUB_REPO_URL}

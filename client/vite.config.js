@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 3000,
+      watch: {
+        usePolling: true,
+        interval: 100,
+      },
     },
     define: {
       'process.env.REACT_APP_API_URL': JSON.stringify(
