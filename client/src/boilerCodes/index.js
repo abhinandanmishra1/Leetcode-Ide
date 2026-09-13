@@ -1,4 +1,4 @@
-export const cppBoiler = `#include <iostream>
+export const cppBoiler = `#include <bits/stdc++.h>
 using namespace std;
 
 int main() {

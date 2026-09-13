@@ -54,3 +54,25 @@ test('executor enforces timeout on infinite loop', async () => {
   const result = await sandbox.execute(submission);
   assert.strictEqual(result.status.id, 5); // Time Limit Exceeded
 });
+
+test('executor compiles and runs C++ with <bits/stdc++.h>', async () => {
+  const cppCode = `#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    vector<string> items = {"LeetCode", "IDE"};
+    for (const auto& s : items) cout << s << " ";
+    cout << endl;
+    return 0;
+}
+`;
+  const submission = {
+    token: 'test-cpp-bits',
+    source_code: cppCode,
+    language: getLanguageById(54),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'LeetCode IDE');
+  assert.strictEqual(result.exit_code, 0);
+});
