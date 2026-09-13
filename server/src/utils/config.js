@@ -5,10 +5,19 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
+function parseClientUrl(raw) {
+  if (!raw || raw.trim() === '*' || raw.trim() === '') return '*';
+  const urls = raw
+    .split(',')
+    .map((u) => u.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+  return urls.length === 1 ? urls[0] : urls;
+}
+
 export default {
   port: parseInt(process.env.PORT, 10) || 5001,
   nodeEnv: process.env.NODE_ENV || 'development',
-  clientUrl: process.env.CLIENT_URL || '*',
+  clientUrl: parseClientUrl(process.env.CLIENT_URL),
   redisUrl: process.env.REDIS_URL || '',
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000,

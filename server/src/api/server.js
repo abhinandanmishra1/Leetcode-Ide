@@ -16,7 +16,26 @@ export async function startServer(port = config.port) {
   await startWorker();
 
   const app = express();
-  app.use(cors({ origin: config.clientUrl }));
+  const corsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. server-to-server, curl, mobile apps)
+      if (!origin) return callback(null, true);
+      if (config.clientUrl === '*') return callback(null, true);
+
+      const allowed = Array.isArray(config.clientUrl) ? config.clientUrl : [config.clientUrl];
+      const normalizedOrigin = origin.replace(/\/+$/, '');
+      const isAllowed = allowed.some((u) => u.replace(/\/+$/, '') === normalizedOrigin);
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        logger.warn({ origin, allowed }, 'CORS blocked request from origin');
+        callback(null, false);
+      }
+    },
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
   app.use(express.json({ limit: '10mb' }));
   app.use(requestLogger);
 

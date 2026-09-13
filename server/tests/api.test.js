@@ -1,6 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert';
 import { startServer, stopServer } from '../src/api/server.js';
+import config from '../src/utils/config.js';
 
 let baseUrl;
 
@@ -73,3 +74,23 @@ test('POST /submissions returns token for polling when wait=false', async () => 
   assert.strictEqual(pollData.status.id, 3);
   assert.strictEqual(Buffer.from(pollData.stdout, 'base64').toString().trim(), '300');
 });
+
+test('CORS handles preflight and normalizes origins with trailing slash', async () => {
+  const allowedOrigin = Array.isArray(config.clientUrl) ? config.clientUrl[0] : config.clientUrl;
+  const testOrigin = allowedOrigin === '*' ? 'https://codepad.abhinandanmishra.in' : allowedOrigin;
+  const preflightRes = await fetch(`${baseUrl}/submissions`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: testOrigin,
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'Content-Type',
+    },
+  });
+  assert.strictEqual(preflightRes.status, 204);
+  assert.strictEqual(
+    preflightRes.headers.get('access-control-allow-origin'),
+    testOrigin
+  );
+  assert.ok(preflightRes.headers.get('access-control-allow-methods'));
+});
+
