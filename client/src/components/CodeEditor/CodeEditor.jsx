@@ -1,15 +1,22 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCode } from "@fortawesome/free-solid-svg-icons";
+import { registerMonacoTemplates } from "./monacoTemplates";
 
-const CodeEditor = ({ code, setCode, language }) => {
+const CodeEditor = ({ code, setCode, language, getAllTemplates, editorInstanceRef }) => {
   const languageValue = typeof language === "string" ? language : (language?.value || "cpp");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
-  const editorRef = useRef(null);
+  const internalEditorRef = useRef(null);
+  const monacoRef = useRef(null);
 
   const handleEditorDidMount = (editor, monaco) => {
-    editorRef.current = editor;
+    internalEditorRef.current = editor;
+    monacoRef.current = monaco;
+
+    if (editorInstanceRef) {
+      editorInstanceRef.current = editor;
+    }
 
     // Define custom LeetCode dark theme
     monaco.editor.defineTheme("leetcode-dark", {
@@ -38,6 +45,11 @@ const CodeEditor = ({ code, setCode, language }) => {
 
     monaco.editor.setTheme("leetcode-dark");
 
+    // Register slash command template completion provider
+    if (getAllTemplates) {
+      registerMonacoTemplates(monaco, getAllTemplates);
+    }
+
     // Track cursor position
     editor.onDidChangeCursorPosition((e) => {
       setCursorPos({
@@ -46,6 +58,13 @@ const CodeEditor = ({ code, setCode, language }) => {
       });
     });
   };
+
+  // Re-register or update templates when getAllTemplates changes
+  useEffect(() => {
+    if (monacoRef.current && getAllTemplates) {
+      registerMonacoTemplates(monacoRef.current, getAllTemplates);
+    }
+  }, [getAllTemplates]);
 
   return (
     <div className="flex flex-col h-full w-full bg-[#1e1e1e] overflow-hidden">
@@ -57,8 +76,10 @@ const CodeEditor = ({ code, setCode, language }) => {
           </span>
           <span>Code</span>
         </div>
-        <div className="text-gray-400 text-xs font-mono">
-          {language?.name || "C++"}
+        <div className="flex items-center space-x-2 text-gray-400 text-xs font-mono">
+          <span>Type <code className="text-[#2cbb5d]">/</code> for templates</span>
+          <span>•</span>
+          <span>{language?.name || "C++"}</span>
         </div>
       </div>
 
@@ -84,6 +105,11 @@ const CodeEditor = ({ code, setCode, language }) => {
             smoothScrolling: true,
             padding: { top: 10, bottom: 10 },
             overviewRulerBorder: false,
+            suggest: {
+              showSnippets: true,
+              filterGraceful: true,
+              snippetsPreventQuickSuggestions: false,
+            },
             scrollbar: {
               verticalScrollbarSize: 8,
               horizontalScrollbarSize: 8,

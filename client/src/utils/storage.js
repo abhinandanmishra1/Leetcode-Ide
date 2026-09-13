@@ -2,12 +2,38 @@ const CODE_PREFIX = "leetcode_ide_code_";
 const STDIN_PREFIX = "leetcode_ide_stdin_";
 const TESTCASES_PREFIX = "leetcode_ide_testcases_";
 const LAST_LANG_KEY = "leetcode_ide_last_lang";
-const LAST_THEME_KEY = "leetcode_ide_last_theme";
+const SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
+const CUSTOM_TEMPLATES_KEY = "leetcode_ide_custom_templates";
 
 export const DEFAULT_TESTCASES = [
   { id: "1", name: "Case 1", input: "", expected: "" },
   { id: "2", name: "Case 2", input: "", expected: "" },
 ];
+
+/**
+ * Normalizes a user-provided name to a unique identifier:
+ * Replaces spaces with "_", strips invalid characters, lowercases.
+ * e.g., "Two Sum Solution" -> "two_sum_solution"
+ */
+export const normalizeId = (name) => {
+  if (!name) return "";
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s_-]/g, "")
+    .replace(/\s+/g, "_");
+};
+
+/**
+ * Normalizes a slash command shortcut:
+ * Ensures it starts with "/" and contains only valid command characters.
+ * e.g., "trie" -> "/trie", "/dsu" -> "/dsu"
+ */
+export const normalizeCommand = (cmd) => {
+  if (!cmd) return "";
+  const cleaned = cmd.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  return cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
+};
 
 export const getSavedCode = (languageId, defaultCode = "") => {
   try {
@@ -55,7 +81,6 @@ export const getSavedTestCases = (languageId) => {
         return parsed;
       }
     }
-    // Migration fallback: check legacy stdin
     const legacyStdin = getSavedStdin(languageId);
     return [
       { id: "1", name: "Case 1", input: legacyStdin || "", expected: "" },
@@ -95,21 +120,120 @@ export const saveLanguage = (lang) => {
   } catch (e) {}
 };
 
-export const getSavedTheme = (defaultTheme = "vs-dark") => {
+// ============================================================
+// SAVED PROBLEMS / CODES MANAGER
+// ============================================================
+
+export const getSavedProblems = () => {
   try {
-    return localStorage.getItem(LAST_THEME_KEY) || defaultTheme;
-  } catch (e) {
-    return defaultTheme;
+    const raw = localStorage.getItem(SAVED_PROBLEMS_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list.sort((a, b) => b.updatedAt - a.updatedAt) : [];
+  } catch {
+    return [];
   }
 };
 
-export const saveTheme = (theme) => {
+export const getSavedProblem = (id) => {
+  const list = getSavedProblems();
+  return list.find((p) => p.id === id) || null;
+};
+
+export const saveProblem = (problem) => {
   try {
-    localStorage.setItem(LAST_THEME_KEY, theme);
-  } catch (e) {}
+    const list = getSavedProblems();
+    const id = problem.id || normalizeId(problem.name);
+    const existingIndex = list.findIndex((p) => p.id === id);
+
+    const now = Date.now();
+    const savedItem = {
+      ...problem,
+      id,
+      name: problem.name || id,
+      updatedAt: now,
+      createdAt: existingIndex >= 0 ? list[existingIndex].createdAt : now,
+    };
+
+    if (existingIndex >= 0) {
+      list[existingIndex] = savedItem;
+    } else {
+      list.unshift(savedItem);
+    }
+
+    localStorage.setItem(SAVED_PROBLEMS_KEY, JSON.stringify(list));
+    return savedItem;
+  } catch (e) {
+    console.warn("Failed to save problem to localStorage:", e);
+    return null;
+  }
+};
+
+export const deleteProblem = (id) => {
+  try {
+    const list = getSavedProblems().filter((p) => p.id !== id);
+    localStorage.setItem(SAVED_PROBLEMS_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+// ============================================================
+// CUSTOM SLASH COMMAND TEMPLATES
+// ============================================================
+
+export const getCustomTemplates = () => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveCustomTemplate = (template) => {
+  try {
+    const list = getCustomTemplates();
+    const command = normalizeCommand(template.command);
+    const existingIndex = list.findIndex((t) => t.command === command);
+
+    const item = {
+      ...template,
+      command,
+      updatedAt: Date.now(),
+    };
+
+    if (existingIndex >= 0) {
+      list[existingIndex] = item;
+    } else {
+      list.push(item);
+    }
+
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(list));
+    return item;
+  } catch (e) {
+    console.warn("Failed to save template:", e);
+    return null;
+  }
+};
+
+export const deleteCustomTemplate = (command) => {
+  try {
+    const norm = normalizeCommand(command);
+    const list = getCustomTemplates().filter((t) => t.command !== norm);
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 const storageService = {
+  normalizeId,
+  normalizeCommand,
   getSavedCode,
   saveCode,
   resetSavedCode,
@@ -120,8 +244,13 @@ const storageService = {
   resetSavedTestCases,
   getSavedLanguage,
   saveLanguage,
-  getSavedTheme,
-  saveTheme,
+  getSavedProblems,
+  getSavedProblem,
+  saveProblem,
+  deleteProblem,
+  getCustomTemplates,
+  saveCustomTemplate,
+  deleteCustomTemplate,
 };
 
 export default storageService;

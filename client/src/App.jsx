@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import CodeEditor from "./components/CodeEditor/CodeEditor";
 import ConsolePanel from "./components/Console/ConsolePanel";
 import Navbar from "./components/Navbar/Navbar";
 import SplitPane from "./components/SplitPane/SplitPane";
+import SaveModal from "./components/SavedCodes/SaveModal";
+import SavedCodesModal from "./components/SavedCodes/SavedCodesModal";
+import TemplatesModal from "./components/Templates/TemplatesModal";
+import DEFAULT_TEMPLATES from "./components/Templates/defaultTemplates";
 import { LANGUAGES } from "./constants/languages";
 import { boilerCodes } from "./boilerCodes";
 import { submitCode } from "./api";
@@ -14,6 +18,12 @@ import {
   saveTestCases,
   getSavedLanguage,
   saveLanguage,
+  getSavedProblems,
+  saveProblem,
+  deleteProblem,
+  getCustomTemplates,
+  saveCustomTemplate,
+  deleteCustomTemplate,
 } from "./utils/storage";
 
 // Safe base64 decoding helper
@@ -48,8 +58,19 @@ function App() {
   const [overallStatus, setOverallStatus] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Modals state
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isSavedCodesModalOpen, setIsSavedCodesModalOpen] = useState(false);
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
+
+  // Saved collections state
+  const [savedProblems, setSavedProblems] = useState(() => getSavedProblems());
+  const [customTemplates, setCustomTemplates] = useState(() => getCustomTemplates());
 
   const saveTimeoutRef = useRef(null);
+  const editorInstanceRef = useRef(null);
 
   // Synchronize activeCaseId if testCases change
   useEffect(() => {
@@ -58,9 +79,24 @@ function App() {
     }
   }, [testCases, activeCaseId]);
 
+  // Combine default and custom slash templates
+  const getAllTemplates = useCallback(() => {
+    const map = new Map();
+    DEFAULT_TEMPLATES.forEach((t) => map.set(t.command, t));
+    customTemplates.forEach((t) => map.set(t.command, t));
+    return Array.from(map.values());
+  }, [customTemplates]);
+
+  // Show a temporary toast banner
+  const showToast = (message, type = "success") => {
+    setToastMessage({ message, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
   // When language changes: load saved code & test cases for that language
   const handleLanguageChange = (newLang) => {
-    // Save current language state first
     saveCode(language.id, code);
     saveTestCases(language.id, testCases);
 
@@ -133,22 +169,105 @@ function App() {
     }
   };
 
+  // Save problem and optionally save slash command template
+  const handleSaveProblem = (problemData) => {
+    const saved = saveProblem(problemData);
+    if (saved) {
+      setSavedProblems(getSavedProblems());
+
+      // If user also provided a slash command shortcut, save it as a template too!
+      if (problemData.command) {
+        saveCustomTemplate({
+          command: problemData.command,
+          name: problemData.name,
+          description: `Custom template for ${problemData.name}`,
+          code: problemData.code,
+          isCustom: true,
+        });
+        setCustomTemplates(getCustomTemplates());
+        showToast(`Saved "${saved.name}" (ID: ${saved.id}) with slash command ${problemData.command}!`);
+      } else {
+        showToast(`Saved "${saved.name}" (ID: ${saved.id}) successfully!`);
+      }
+    }
+  };
+
+  // Load a saved problem into the active workspace
+  const handleLoadProblem = (problem) => {
+    // Find matching language object
+    const matchedLang = LANGUAGES.find((l) => l.id === problem.languageId) || language;
+    setLanguage(matchedLang);
+    saveLanguage(matchedLang);
+
+    setCode(problem.code || "");
+    saveCode(matchedLang.id, problem.code || "");
+
+    const loadedCases = Array.isArray(problem.testCases) && problem.testCases.length > 0
+      ? problem.testCases
+      : DEFAULT_TESTCASES;
+
+    setTestCases(loadedCases);
+    saveTestCases(matchedLang.id, loadedCases);
+    setActiveCaseId(loadedCases[0]?.id || "1");
+
+    setResults(null);
+    setOverallStatus(null);
+    showToast(`Loaded "${problem.name}" into the editor!`);
+  };
+
+  // Delete a saved problem
+  const handleDeleteProblem = (id) => {
+    deleteProblem(id);
+    setSavedProblems(getSavedProblems());
+    showToast("Problem deleted from saved codes.", "info");
+  };
+
+  // Insert template code directly into Monaco editor at cursor position
+  const handleInsertTemplate = (templateCode) => {
+    const editor = editorInstanceRef.current;
+    if (editor) {
+      const selection = editor.getSelection();
+      editor.executeEdits("template-insert", [
+        {
+          range: selection,
+          text: templateCode,
+          forceMoveMarkers: true,
+        },
+      ]);
+      editor.focus();
+    } else {
+      setCode((prev) => prev + "\n" + templateCode);
+    }
+    showToast("Template inserted into editor!");
+  };
+
+  // Save custom template
+  const handleSaveCustomTemplate = (tpl) => {
+    saveCustomTemplate(tpl);
+    setCustomTemplates(getCustomTemplates());
+    showToast(`Custom template ${tpl.command} created!`);
+  };
+
+  // Delete custom template
+  const handleDeleteCustomTemplate = (cmd) => {
+    deleteCustomTemplate(cmd);
+    setCustomTemplates(getCustomTemplates());
+    showToast(`Template ${cmd} deleted.`, "info");
+  };
+
   // Run code against all configured test cases
   const handleRunCode = async () => {
     if (isRunning) return;
 
-    // Immediately switch to Test Result tab
     setActiveTab("result");
     setIsRunning(true);
     setOverallStatus("Running...");
     setAlertMessage(null);
 
-    // Save latest edits immediately
     saveCode(language.id, code);
     saveTestCases(language.id, testCases);
 
     try {
-      // Execute each testcase concurrently against the execution backend
       const executionPromises = testCases.map(async (tc) => {
         const payload = {
           language_id: language.id,
@@ -180,12 +299,10 @@ function App() {
         const compileOutput = decodeBase64(data.compile_output || "");
         const statusId = data.status?.id;
 
-        // Verification logic
         let isPassed = false;
         let isWrongAnswer = false;
 
         if (statusId === 3) {
-          // Normal exit code 0
           const expectedTrimmed = (tc.expected || "").trim();
           const actualTrimmed = actualOutput.trim();
 
@@ -198,12 +315,10 @@ function App() {
               isWrongAnswer = true;
             }
           } else {
-            // No expected output provided -> Accepted if exited 0
             isPassed = true;
             isWrongAnswer = false;
           }
         } else {
-          // Compile error, runtime error, or TLE
           isPassed = false;
           isWrongAnswer = false;
         }
@@ -227,7 +342,6 @@ function App() {
       const caseResults = await Promise.all(executionPromises);
       setResults(caseResults);
 
-      // Compute aggregate overall status
       const hasCompileError = caseResults.some((r) => r.status?.id === 6);
       const hasRuntimeError = caseResults.some((r) => r.status?.id === 7 || r.status?.id === 11 || r.status?.id === 12);
       const hasTLE = caseResults.some((r) => r.status?.id === 5);
@@ -249,7 +363,6 @@ function App() {
 
       setOverallStatus(computedStatus);
 
-      // If a case failed, switch activeCaseId to that failing case so user sees the issue immediately
       const firstFailing = caseResults.find((r) => !r.isPassed);
       if (firstFailing) {
         setActiveCaseId(firstFailing.caseId);
@@ -270,8 +383,32 @@ function App() {
         setLanguage={handleLanguageChange}
         onRun={handleRunCode}
         onReset={handleResetCode}
+        onOpenSaveModal={() => setIsSaveModalOpen(true)}
+        onOpenSavedCodesModal={() => setIsSavedCodesModalOpen(true)}
+        onOpenTemplatesModal={() => setIsTemplatesModalOpen(true)}
+        savedCount={savedProblems.length}
         isRunning={isRunning}
       />
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-14 right-4 z-50 px-4 py-2.5 rounded-lg shadow-lg border text-xs font-medium flex items-center space-x-2 animate-in slide-in-from-top duration-200 ${
+            toastMessage.type === "info"
+              ? "bg-[#252525] border-gray-600 text-gray-200"
+              : "bg-[#172e21] border-[#2cbb5d]/50 text-[#2cbb5d]"
+          }`}
+        >
+          <span>{toastMessage.message}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-gray-400 hover:text-white ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Alert Notification Banner if any */}
       {alertMessage && (
@@ -294,6 +431,8 @@ function App() {
           code={code}
           setCode={handleCodeChange}
           language={language}
+          getAllTemplates={getAllTemplates}
+          editorInstanceRef={editorInstanceRef}
         />
 
         {/* Right / Bottom Pane: Console Panel */}
@@ -312,6 +451,35 @@ function App() {
           onUpdateCase={handleUpdateCase}
         />
       </SplitPane>
+
+      {/* Save Code & Testcases Modal */}
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleSaveProblem}
+        currentLanguage={language}
+        code={code}
+        testCases={testCases}
+      />
+
+      {/* Saved Codes Library Drawer */}
+      <SavedCodesModal
+        isOpen={isSavedCodesModalOpen}
+        onClose={() => setIsSavedCodesModalOpen(false)}
+        savedProblems={savedProblems}
+        onLoadProblem={handleLoadProblem}
+        onDeleteProblem={handleDeleteProblem}
+      />
+
+      {/* Slash Command Templates Modal */}
+      <TemplatesModal
+        isOpen={isTemplatesModalOpen}
+        onClose={() => setIsTemplatesModalOpen(false)}
+        allTemplates={getAllTemplates()}
+        onInsertTemplate={handleInsertTemplate}
+        onSaveCustomTemplate={handleSaveCustomTemplate}
+        onDeleteCustomTemplate={handleDeleteCustomTemplate}
+      />
     </div>
   );
 }
