@@ -6,6 +6,7 @@ import submissionsRouter from './routes/submissions.js';
 import languagesRouter from './routes/languages.js';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
+import snippetsRouter from './routes/snippets.js';
 import requestLogger from './middleware/requestLogger.js';
 import { initializeQueue, closeQueue } from '../queue/producer.js';
 import { startWorker, stopWorker } from '../queue/worker.js';
@@ -46,6 +47,7 @@ export async function startServer(port = config.port) {
   app.use('/languages', languagesRouter);
   app.use('/submissions', submissionsRouter);
   app.use('/auth', authRouter);
+  app.use('/snippets', snippetsRouter);
 
   // Global error handler
   app.use((err, req, res, next) => {
