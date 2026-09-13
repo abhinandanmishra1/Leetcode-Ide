@@ -36,6 +36,7 @@ const Navbar = ({
   activeSnippetName = "",
   activeSnippetCommand = "",
   cloudSnippet = null,
+  cloudSyncStatus = "idle",
   savedProblems = [],
   onLoadProblem,
   onDeleteProblem,
@@ -111,21 +112,31 @@ const Navbar = ({
         <div className="relative inline-flex items-center" ref={dropdownRef}>
           <Tooltip
             content={
-              activeSnippetName
-                ? `Save changes to "${activeSnippetName}" ${
-                    activeSnippetCommand ? `(${activeSnippetCommand})` : ""
-                  } (Ctrl + S)`
+              cloudSyncStatus === "saving"
+                ? "Auto-saving changes to cloud (500ms debounce)..."
+                : activeSnippetName
+                ? user && cloudSnippet?.author?.id === user.id
+                  ? `Save changes to "${activeSnippetName}" (Auto-saves to cloud on edit)`
+                  : `Save changes to "${activeSnippetName}" ${
+                      activeSnippetCommand ? `(${activeSnippetCommand})` : ""
+                    } (Ctrl + S)`
                 : "Save snippet to cloud (Ctrl + S)"
             }
             side="bottom"
           >
             <button
               type="button"
+              id="navbar-save-button"
               onClick={onOpenSaveModal}
               className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-l-md transition-colors"
             >
-              <FontAwesomeIcon icon={faFloppyDisk} className="text-xs text-[#ffa116]" />
-              <span className="font-semibold">Save</span>
+              <FontAwesomeIcon
+                icon={faFloppyDisk}
+                className={`text-xs text-[#ffa116] ${cloudSyncStatus === "saving" ? "animate-pulse" : ""}`}
+              />
+              <span className="font-semibold">
+                {cloudSyncStatus === "saving" ? "Saving..." : "Save"}
+              </span>
               {activeSnippetName && (
                 <>
                   <span className="text-gray-500 text-[11px]">|</span>
@@ -263,28 +274,57 @@ const Navbar = ({
           )}
         </div>
 
-        {/* Cloud Saved Snippet Author Badge */}
+        {/* Cloud Saved Snippet Author Badge & Live Auto-save Sync Status */}
         {cloudSnippet && cloudSnippet.author && (
-          <Tooltip
-            content={`Saved on Cloud by @${cloudSnippet.author.username}${
-              user && cloudSnippet.author.id === user.id ? " (You)" : ""
-            }`}
-            side="bottom"
-          >
-            <Link
-              to={`/u/${cloudSnippet.author.username}`}
-              className="hidden sm:flex items-center space-x-1 px-2 py-1 text-xs text-gray-300 hover:text-white bg-[#222222] hover:bg-[#2b2b2b] border border-[#3e3e3e] rounded-md transition-colors"
+          <div className="hidden sm:flex items-center space-x-1.5">
+            <Tooltip
+              content={`Saved on Cloud by @${cloudSnippet.author.username}${
+                user && cloudSnippet.author.id === user.id ? " (You)" : ""
+              }`}
+              side="bottom"
             >
-              <FontAwesomeIcon icon={faCloud} className="text-[#00b4d8] text-[10px]" />
-              <span className="text-gray-400 text-[11px]">by</span>
-              <span className="text-[#ffa116] font-medium text-[11px]">
-                @{cloudSnippet.author.username}
+              <Link
+                to={`/u/${cloudSnippet.author.username}`}
+                className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-300 hover:text-white bg-[#222222] hover:bg-[#2b2b2b] border border-[#3e3e3e] rounded-md transition-colors"
+              >
+                <FontAwesomeIcon icon={faCloud} className="text-[#00b4d8] text-[10px]" />
+                <span className="text-gray-400 text-[11px]">by</span>
+                <span className="text-[#ffa116] font-medium text-[11px]">
+                  @{cloudSnippet.author.username}
+                </span>
+                {user && cloudSnippet.author.id === user.id && (
+                  <span className="text-[10px] text-gray-400 font-mono">(You)</span>
+                )}
+              </Link>
+            </Tooltip>
+
+            {user && cloudSnippet.author.id === user.id && cloudSyncStatus && cloudSyncStatus !== "idle" && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded flex items-center space-x-1 font-mono transition-all ${
+                  cloudSyncStatus === "saving"
+                    ? "bg-amber-950/60 text-amber-300 border border-amber-800/50 animate-pulse"
+                    : cloudSyncStatus === "saved"
+                    ? "bg-[#1c2e22] text-[#2cbb5d] border border-[#2cbb5d]/40"
+                    : "bg-red-950/60 text-red-400 border border-red-800/40"
+                }`}
+                title={
+                  cloudSyncStatus === "saving"
+                    ? "Auto-saving changes to cloud (500ms debounce)..."
+                    : cloudSyncStatus === "saved"
+                    ? "All changes saved to cloud"
+                    : "Failed to auto-save to cloud"
+                }
+              >
+                <span>
+                  {cloudSyncStatus === "saving"
+                    ? "☁ saving..."
+                    : cloudSyncStatus === "saved"
+                    ? "✓ synced"
+                    : "⚠ sync error"}
+                </span>
               </span>
-              {user && cloudSnippet.author.id === user.id && (
-                <span className="text-[10px] text-gray-400 font-mono">(You)</span>
-              )}
-            </Link>
-          </Tooltip>
+            )}
+          </div>
         )}
 
         {/* Share Button */}
