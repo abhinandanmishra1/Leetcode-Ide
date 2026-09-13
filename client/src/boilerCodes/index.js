@@ -1,3 +1,4 @@
+// CodePad standard I/O starter code templates
 export const cppBoiler = `#include <bits/stdc++.h>
 using namespace std;
 

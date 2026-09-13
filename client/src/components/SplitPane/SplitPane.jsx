@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { getItemWithFallback } from "../../utils/storage";
 
 export const SplitPane = ({
   children,
@@ -6,7 +7,7 @@ export const SplitPane = ({
   minRight = 280,
   minTop = 200,
   minBottom = 180,
-  storageKey = "leetcode_ide_split_ratio",
+  storageKey = "codepad_split_ratio",
 }) => {
   const [leftPane, rightPane] = React.Children.toArray(children);
   const containerRef = useRef(null);
@@ -16,7 +17,8 @@ export const SplitPane = ({
   // Split ratio stored as percentage (0.20 to 0.80), default 55%
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
+      const fallbackKey = storageKey === "codepad_split_ratio" ? "leetcode_ide_split_ratio" : null;
+      const saved = getItemWithFallback(storageKey, fallbackKey);
       return saved ? Math.min(0.80, Math.max(0.20, parseFloat(saved))) : 0.55;
     } catch {
       return 0.55;

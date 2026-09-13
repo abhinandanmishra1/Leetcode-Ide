@@ -1,12 +1,29 @@
 import { INITIAL_SEEDED_TEMPLATES } from "../components/Templates/defaultTemplates";
 
-const CODE_PREFIX = "leetcode_ide_code_";
-const STDIN_PREFIX = "leetcode_ide_stdin_";
-const TESTCASES_PREFIX = "leetcode_ide_testcases_";
-const LAST_LANG_KEY = "leetcode_ide_last_lang";
-const SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
-const TEMPLATES_KEY = "leetcode_ide_templates";
-const TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v3";
+// CodePad storage keys (with legacy leetcode_ide_* fallbacks)
+export const CODE_PREFIX = "codepad_code_";
+export const LEGACY_CODE_PREFIX = "leetcode_ide_code_";
+
+export const STDIN_PREFIX = "codepad_stdin_";
+export const LEGACY_STDIN_PREFIX = "leetcode_ide_stdin_";
+
+export const TESTCASES_PREFIX = "codepad_testcases_";
+export const LEGACY_TESTCASES_PREFIX = "leetcode_ide_testcases_";
+
+export const LAST_LANG_KEY = "codepad_last_lang";
+export const LEGACY_LAST_LANG_KEY = "leetcode_ide_last_lang";
+
+export const LAST_THEME_KEY = "codepad_last_theme";
+export const LEGACY_LAST_THEME_KEY = "leetcode_ide_last_theme";
+
+export const SAVED_PROBLEMS_KEY = "codepad_saved_problems";
+export const LEGACY_SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
+
+export const TEMPLATES_KEY = "codepad_templates";
+export const LEGACY_TEMPLATES_KEY = "leetcode_ide_templates";
+
+export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v3";
+export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v3";
 
 export const DEFAULT_TESTCASES = [
   {
@@ -42,9 +59,42 @@ export const normalizeCommand = (cmd) => {
   return cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
 };
 
+/**
+ * Helper to get an item from localStorage with transparent legacy fallback and migration.
+ * 1. Checks newKey first. If a non-null, non-empty value is found, returns it.
+ * 2. If newKey is null or empty, checks legacyKey (if provided).
+ * 3. If legacyKey has a non-null, non-empty value, migrates it to newKey and returns it.
+ * 4. Otherwise returns the value from newKey (or null).
+ */
+export const getItemWithFallback = (newKey, legacyKey) => {
+  try {
+    const newVal = localStorage.getItem(newKey);
+    if (newVal !== null && newVal !== "") {
+      return newVal;
+    }
+    if (legacyKey) {
+      const legacyVal = localStorage.getItem(legacyKey);
+      if (legacyVal !== null && legacyVal !== "") {
+        try {
+          localStorage.setItem(newKey, legacyVal);
+        } catch (e) {
+          // localStorage quota or security error
+        }
+        return legacyVal;
+      }
+    }
+    return newVal;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const getSavedCode = (languageId, defaultCode = "") => {
   try {
-    const saved = localStorage.getItem(`${CODE_PREFIX}${languageId}`);
+    const saved = getItemWithFallback(
+      `${CODE_PREFIX}${languageId}`,
+      `${LEGACY_CODE_PREFIX}${languageId}`
+    );
     return saved !== null ? saved : defaultCode;
   } catch (e) {
     return defaultCode;
@@ -62,12 +112,18 @@ export const saveCode = (languageId, code) => {
 export const resetSavedCode = (languageId) => {
   try {
     localStorage.removeItem(`${CODE_PREFIX}${languageId}`);
+    localStorage.removeItem(`${LEGACY_CODE_PREFIX}${languageId}`);
   } catch (e) {}
 };
 
 export const getSavedStdin = (languageId) => {
   try {
-    return localStorage.getItem(`${STDIN_PREFIX}${languageId}`) || "";
+    return (
+      getItemWithFallback(
+        `${STDIN_PREFIX}${languageId}`,
+        `${LEGACY_STDIN_PREFIX}${languageId}`
+      ) || ""
+    );
   } catch (e) {
     return "";
   }
@@ -81,7 +137,10 @@ export const saveStdin = (languageId, stdin) => {
 
 export const getSavedTestCases = (languageId) => {
   try {
-    const saved = localStorage.getItem(`${TESTCASES_PREFIX}${languageId}`);
+    const saved = getItemWithFallback(
+      `${TESTCASES_PREFIX}${languageId}`,
+      `${LEGACY_TESTCASES_PREFIX}${languageId}`
+    );
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -113,12 +172,13 @@ export const saveTestCases = (languageId, cases) => {
 export const resetSavedTestCases = (languageId) => {
   try {
     localStorage.removeItem(`${TESTCASES_PREFIX}${languageId}`);
+    localStorage.removeItem(`${LEGACY_TESTCASES_PREFIX}${languageId}`);
   } catch (e) {}
 };
 
 export const getSavedLanguage = (defaultLang) => {
   try {
-    const saved = localStorage.getItem(LAST_LANG_KEY);
+    const saved = getItemWithFallback(LAST_LANG_KEY, LEGACY_LAST_LANG_KEY);
     return saved ? JSON.parse(saved) : defaultLang;
   } catch (e) {
     return defaultLang;
@@ -131,13 +191,33 @@ export const saveLanguage = (lang) => {
   } catch (e) {}
 };
 
+export const getSavedTheme = (defaultTheme = "leetcode-dark") => {
+  try {
+    const saved = getItemWithFallback(LAST_THEME_KEY, LEGACY_LAST_THEME_KEY);
+    if (!saved) return defaultTheme;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return saved;
+    }
+  } catch (e) {
+    return defaultTheme;
+  }
+};
+
+export const saveTheme = (theme) => {
+  try {
+    localStorage.setItem(LAST_THEME_KEY, JSON.stringify(theme));
+  } catch (e) {}
+};
+
 // ============================================================
 // SAVED PROBLEMS / CODES MANAGER
 // ============================================================
 
 export const getSavedProblems = () => {
   try {
-    const raw = localStorage.getItem(SAVED_PROBLEMS_KEY);
+    const raw = getItemWithFallback(SAVED_PROBLEMS_KEY, LEGACY_SAVED_PROBLEMS_KEY);
     if (!raw) return [];
     const list = JSON.parse(raw);
     return Array.isArray(list) ? list.sort((a, b) => b.updatedAt - a.updatedAt) : [];
@@ -201,14 +281,14 @@ export const deleteProblem = (id) => {
  */
 export const getTemplates = (languageId) => {
   try {
-    const isSeeded = localStorage.getItem(TEMPLATES_SEEDED_KEY);
+    const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY, LEGACY_TEMPLATES_SEEDED_KEY);
     let list = [];
     if (!isSeeded) {
       list = [...INITIAL_SEEDED_TEMPLATES];
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));
       localStorage.setItem(TEMPLATES_SEEDED_KEY, "true");
     } else {
-      const raw = localStorage.getItem(TEMPLATES_KEY);
+      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
       list = raw ? JSON.parse(raw) : [];
     }
 
@@ -278,6 +358,7 @@ export const deleteCustomTemplate = deleteTemplate;
 const storageService = {
   normalizeId,
   normalizeCommand,
+  getItemWithFallback,
   getSavedCode,
   saveCode,
   resetSavedCode,
@@ -288,6 +369,8 @@ const storageService = {
   resetSavedTestCases,
   getSavedLanguage,
   saveLanguage,
+  getSavedTheme,
+  saveTheme,
   getSavedProblems,
   getSavedProblem,
   saveProblem,
@@ -299,6 +382,22 @@ const storageService = {
   getCustomTemplates,
   saveCustomTemplate,
   deleteCustomTemplate,
+  CODE_PREFIX,
+  LEGACY_CODE_PREFIX,
+  STDIN_PREFIX,
+  LEGACY_STDIN_PREFIX,
+  TESTCASES_PREFIX,
+  LEGACY_TESTCASES_PREFIX,
+  LAST_LANG_KEY,
+  LEGACY_LAST_LANG_KEY,
+  LAST_THEME_KEY,
+  LEGACY_LAST_THEME_KEY,
+  SAVED_PROBLEMS_KEY,
+  LEGACY_SAVED_PROBLEMS_KEY,
+  TEMPLATES_KEY,
+  LEGACY_TEMPLATES_KEY,
+  TEMPLATES_SEEDED_KEY,
+  LEGACY_TEMPLATES_SEEDED_KEY,
 };
 
 export default storageService;

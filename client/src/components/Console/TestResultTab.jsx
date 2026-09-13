@@ -50,7 +50,7 @@ export const TestResultTab = ({
 
   return (
     <div className="flex flex-col h-full space-y-4 font-sans text-xs overflow-y-auto pr-1">
-      {/* Big LeetCode Status Header */}
+      {/* Big CodePad Status Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#2d2d2d] flex-shrink-0">
         <div className="flex items-center space-x-3">
           <span className={`text-xl font-bold tracking-tight ${getStatusColor(currentOverallStatus)}`}>
