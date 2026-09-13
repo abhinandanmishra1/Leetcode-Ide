@@ -22,8 +22,8 @@ export const LEGACY_SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
 export const TEMPLATES_KEY = "codepad_templates";
 export const LEGACY_TEMPLATES_KEY = "leetcode_ide_templates";
 
-export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v3";
-export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v3";
+export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v4";
+export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v4";
 
 export const DEFAULT_TESTCASES = [
   {

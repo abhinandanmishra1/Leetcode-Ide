@@ -89,18 +89,55 @@ if __name__ == "__main__":
 
 export const jsBoiler = `const fs = require('fs');
 
-function main() {
-    const input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);
-    if (!input || input.length < 2) return;
+// ==========================================
+// Fast I/O Utilities for JavaScript
+// ==========================================
+let _inputTokens = [];
+let _tokenIndex = 0;
 
+function _loadInput() {
+    if (_inputTokens.length === 0) {
+        const raw = fs.readFileSync(0, 'utf-8');
+        _inputTokens = raw.trim().split(/\\s+/).filter(Boolean);
+    }
+}
+
+/**
+ * Reads the next token as a string
+ */
+function getStringInput() {
+    _loadInput();
+    return _tokenIndex < _inputTokens.length ? _inputTokens[_tokenIndex++] : "";
+}
+
+/**
+ * Reads the next token as a number
+ */
+function getNumInput() {
+    return Number(getStringInput());
+}
+
+/**
+ * Reads the next n tokens as an array of numbers
+ */
+function getArrayInput(n) {
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+        arr.push(getNumInput());
+    }
+    return arr;
+}
+
+function main() {
     // 1. Read one number
-    const n = parseInt(input[0], 10);
+    const n = getNumInput();
+    if (isNaN(n)) return;
 
     // 2. Read one string
-    const s = input[1];
+    const s = getStringInput();
 
     // 3. Read array of n numbers
-    const arr = input.slice(2, 2 + n).map(Number);
+    const arr = getArrayInput(n);
 
     // Output values
     console.log(\`Number: \${n}\`);
@@ -113,18 +150,55 @@ main();
 
 export const tsBoiler = `import * as fs from 'fs';
 
-function main(): void {
-    const input: string[] = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);
-    if (!input || input.length < 2) return;
+// ==========================================
+// Fast I/O Utilities for TypeScript
+// ==========================================
+let _inputTokens: string[] = [];
+let _tokenIndex: number = 0;
 
+function _loadInput(): void {
+    if (_inputTokens.length === 0) {
+        const raw = fs.readFileSync(0, 'utf-8');
+        _inputTokens = raw.trim().split(/\\s+/).filter(Boolean);
+    }
+}
+
+/**
+ * Reads the next token as a string
+ */
+function getStringInput(): string {
+    _loadInput();
+    return _tokenIndex < _inputTokens.length ? _inputTokens[_tokenIndex++] : "";
+}
+
+/**
+ * Reads the next token as a number
+ */
+function getNumInput(): number {
+    return Number(getStringInput());
+}
+
+/**
+ * Reads the next n tokens as an array of numbers
+ */
+function getArrayInput(n: number): number[] {
+    const arr: number[] = [];
+    for (let i = 0; i < n; i++) {
+        arr.push(getNumInput());
+    }
+    return arr;
+}
+
+function main(): void {
     // 1. Read one number
-    const n: number = parseInt(input[0], 10);
+    const n: number = getNumInput();
+    if (isNaN(n)) return;
 
     // 2. Read one string
-    const s: string = input[1];
+    const s: string = getStringInput();
 
     // 3. Read array of n numbers
-    const arr: number[] = input.slice(2, 2 + n).map(Number);
+    const arr: number[] = getArrayInput(n);
 
     // Output values
     console.log(\`Number: \${n}\`);

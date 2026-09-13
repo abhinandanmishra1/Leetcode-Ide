@@ -208,3 +208,46 @@ public class Solution {
   assert.strictEqual(result.status.id, 3); // Accepted
   assert.strictEqual(result.stdout.trim(), 'Auto Imports');
 });
+
+test('executor compiles and runs TypeScript with I/O utilities', async () => {
+  const tsCode = `
+function main(): void {
+    const n: number = getNumInput();
+    const s: string = getStringInput();
+    const arr: number[] = getArrayInput(n);
+    console.log(\`TS: \${n}, \${s}, \${arr.join(',')}\`);
+}
+main();
+`;
+  const submission = {
+    token: 'test-ts-io',
+    source_code: tsCode,
+    language: getLanguageById(74),
+    stdin: '3 alpha 10 20 30',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'TS: 3, alpha, 10,20,30');
+});
+
+test('executor runs JavaScript with I/O utilities', async () => {
+  const jsCode = `
+function main() {
+    const n = getNumInput();
+    const s = getStringInput();
+    const arr = getArrayInput(n);
+    console.log(\`JS: \${n}, \${s}, \${arr.join(',')}\`);
+}
+main();
+`;
+  const submission = {
+    token: 'test-js-io',
+    source_code: jsCode,
+    language: getLanguageById(63),
+    stdin: '3 beta 100 200 300',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'JS: 3, beta, 100,200,300');
+});
+
