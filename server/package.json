@@ -1,0 +1,28 @@
+{
+  "name": "leetcode-ide-server",
+  "version": "1.0.0",
+  "description": "Sandboxed multi-language code execution engine",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch --watch-path=src src/index.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "dependencies": {
+    "@types/node": "^26.5.1",
+    "bullmq": "^5.41.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "ioredis": "^5.4.1",
+    "pino": "^8.20.0",
+    "pino-pretty": "^11.0.0",
+    "typescript": "^5.4.5",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
