@@ -15,10 +15,12 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@monaco-editor/react": "^4.4.5",
+    "@react-oauth/google": "^0.13.5",
     "axios": "^0.27.2",
     "monaco-themes": "^0.4.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^7.18.3",
     "react-select": "^5.3.2",
     "react-textarea-autosize": "^8.3.4"
   },

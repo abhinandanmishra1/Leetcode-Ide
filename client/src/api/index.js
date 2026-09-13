@@ -1,11 +1,28 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+export const API_BASE_URL =
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) ||
+  "http://localhost:5001";
+
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Automatically inject JWT Authorization Bearer token into all requests
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("codepad_auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ==================== SUBMISSIONS API ====================
 
 export const submitCode = async (formData, options = {}) => {
   try {
     const query = options.wait ? "?base64_encoded=true&wait=true" : "?base64_encoded=true";
-    const response = await axios.post(`${API_BASE_URL}/submissions${query}`, formData);
+    const response = await apiClient.post(`/submissions${query}`, formData);
     return { success: true, data: response.data };
   } catch (err) {
     const message = err.response?.data?.message || err.message;
@@ -15,11 +32,10 @@ export const submitCode = async (formData, options = {}) => {
 
 export const checkStatus = async (token) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/submissions/${token}?base64_encoded=true`);
+    const response = await apiClient.get(`/submissions/${token}?base64_encoded=true`);
     const statusId = response.data.status?.id;
 
     if (statusId === 1 || statusId === 2) {
-      // In Queue or Processing - poll after 400ms
       await new Promise((r) => setTimeout(r, 400));
       return checkStatus(token);
     }
@@ -30,9 +46,79 @@ export const checkStatus = async (token) => {
   }
 };
 
+// ==================== AUTH API ====================
+
+export const authApi = {
+  loginWithGoogle: async (credential) => {
+    const res = await apiClient.post("/auth/google", { credential });
+    return res.data;
+  },
+  devLogin: async (userData = {}) => {
+    const res = await apiClient.post("/auth/dev-login", userData);
+    return res.data;
+  },
+  getMe: async () => {
+    const res = await apiClient.get("/auth/me");
+    return res.data;
+  },
+  updateProfile: async (data) => {
+    const res = await apiClient.put("/auth/profile", data);
+    return res.data;
+  },
+};
+
+// ==================== SNIPPETS API ====================
+
+export const snippetsApi = {
+  create: async (data) => {
+    const res = await apiClient.post("/snippets", data);
+    return res.data;
+  },
+  getById: async (snippetId) => {
+    const res = await apiClient.get(`/snippets/${snippetId}`);
+    return res.data;
+  },
+  update: async (snippetId, data) => {
+    const res = await apiClient.put(`/snippets/${snippetId}`, data);
+    return res.data;
+  },
+  fork: async (snippetId) => {
+    const res = await apiClient.post(`/snippets/${snippetId}/fork`);
+    return res.data;
+  },
+  getPublic: async (params = {}) => {
+    const res = await apiClient.get("/snippets", { params });
+    return res.data;
+  },
+};
+
+// ==================== USERS & SOCIAL API ====================
+
+export const usersApi = {
+  getProfile: async (username) => {
+    const res = await apiClient.get(`/users/${username}`);
+    return res.data;
+  },
+  getSnippets: async (username) => {
+    const res = await apiClient.get(`/users/${username}/snippets`);
+    return res.data;
+  },
+  toggleFollow: async (username) => {
+    const res = await apiClient.post(`/users/${username}/follow`);
+    return res.data;
+  },
+  search: async (query) => {
+    const res = await apiClient.get("/users/search", { params: { q: query } });
+    return res.data;
+  },
+};
+
 const apiService = {
   submitCode,
   checkStatus,
+  auth: authApi,
+  snippets: snippetsApi,
+  users: usersApi,
 };
 
 export default apiService;
