@@ -1,6 +1,7 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import Tooltip from "../ui/tooltip";
 
 export const TestcaseTab = ({
   testCases,
@@ -38,17 +39,18 @@ export const TestcaseTab = ({
             >
               <span>{tc.name || `Case ${idx + 1}`}</span>
               {testCases.length > 1 && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveCase(tc.id);
-                  }}
-                  title="Remove this testcase"
-                  className="text-gray-500 hover:text-red-400 ml-1 transition-colors p-0.5"
-                >
-                  <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
-                </button>
+                <Tooltip content="Remove this testcase" side="top">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveCase(tc.id);
+                    }}
+                    className="text-gray-500 hover:text-red-400 ml-1 transition-colors p-0.5"
+                  >
+                    <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
+                  </button>
+                </Tooltip>
               )}
             </div>
           );
@@ -56,19 +58,20 @@ export const TestcaseTab = ({
 
         {/* Add Test Case Button */}
         {testCases.length < 8 && (
-          <button
-            type="button"
-            onClick={canAddCase ? onAddCase : undefined}
-            disabled={!canAddCase}
-            title={addTooltip}
-            className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors border ${
-              canAddCase
-                ? "bg-[#222222] hover:bg-[#333333] text-gray-300 hover:text-white border-[#3e3e3e] hover:border-[#555555] active:scale-95 cursor-pointer"
-                : "bg-[#1c1c1c] text-gray-600 border-[#2a2a2a] cursor-not-allowed opacity-50"
-            }`}
-          >
-            <FontAwesomeIcon icon={faPlus} className="text-xs" />
-          </button>
+          <Tooltip content={addTooltip} side="top">
+            <button
+              type="button"
+              onClick={canAddCase ? onAddCase : undefined}
+              disabled={!canAddCase}
+              className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors border ${
+                canAddCase
+                  ? "bg-[#222222] hover:bg-[#333333] text-gray-300 hover:text-white border-[#3e3e3e] hover:border-[#555555] active:scale-95 cursor-pointer"
+                  : "bg-[#1c1c1c] text-gray-600 border-[#2a2a2a] cursor-not-allowed opacity-50"
+              }`}
+            >
+              <FontAwesomeIcon icon={faPlus} className="text-xs" />
+            </button>
+          </Tooltip>
         )}
       </div>
 

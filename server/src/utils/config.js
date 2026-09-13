@@ -25,4 +25,7 @@ export default {
   },
   executionTimeoutMs: parseInt(process.env.EXECUTION_TIMEOUT_MS, 10) || 5000,
   maxMemoryMb: parseInt(process.env.MAX_MEMORY_MB, 10) || 256,
+  mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/leetcode-ide',
+  jwtSecret: process.env.JWT_SECRET || 'leetcode-ide-dev-jwt-secret-key-2026',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
 };

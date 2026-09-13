@@ -23,7 +23,7 @@ export const LEGACY_SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
 export const TEMPLATES_KEY = "codepad_templates";
 export const LEGACY_TEMPLATES_KEY = "leetcode_ide_templates";
 
-export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded";
+export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v3";
 export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded";
 
 export const DEFAULT_TESTCASES = [
@@ -305,21 +305,20 @@ export const deleteProblem = (id) => {
  */
 export const getTemplates = (languageId) => {
   try {
-    const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY, LEGACY_TEMPLATES_SEEDED_KEY);
-    let list = [];
-    if (!isSeeded) {
-      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
-      const existing = raw ? JSON.parse(raw) : [];
-      // Keep any user-created custom templates
-      const userCustom = existing.filter(
-        (t) => !t.id?.startsWith("boilerplate_") && !t.id?.startsWith("binarysearch_")
-      );
-      list = [...INITIAL_SEEDED_TEMPLATES, ...userCustom];
+    const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
+    const existing = raw ? JSON.parse(raw) : [];
+    // Only return user-created custom templates, purge seeded templates
+    const list = existing.filter(
+      (t) =>
+        !t.id?.startsWith("boilerplate_") &&
+        !t.id?.startsWith("binarysearch_") &&
+        !t.id?.startsWith("segtree_") &&
+        !t.id?.startsWith("dsu_") &&
+        !t.id?.startsWith("bitmask_dp_") &&
+        !t.command?.toLowerCase().includes("fib")
+    );
+    if (list.length !== existing.length) {
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));
-      localStorage.setItem(TEMPLATES_SEEDED_KEY, "true");
-    } else {
-      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
-      list = raw ? JSON.parse(raw) : [];
     }
 
     if (languageId) {

@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCode, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { registerMonacoTemplates } from "./monacoTemplates";
+import Tooltip from "../ui/tooltip";
 
 const CodeEditor = ({
   code,
@@ -11,6 +12,7 @@ const CodeEditor = ({
   getAllTemplates,
   editorInstanceRef,
   onOpenSnippetsModal,
+  readOnly = false,
 }) => {
   const languageValue = typeof language === "string" ? language : (language?.value || "cpp");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
@@ -147,6 +149,8 @@ const CodeEditor = ({
           theme="leetcode-dark"
           onMount={handleEditorDidMount}
           options={{
+            readOnly: Boolean(readOnly),
+            domReadOnly: Boolean(readOnly),
             fontSize: 13,
             fontFamily: "'Fira Code', Menlo, Monaco, Consolas, 'Courier New', monospace",
             minimap: { enabled: false },
@@ -155,7 +159,7 @@ const CodeEditor = ({
             tabSize: 4,
             lineNumbers: "on",
             renderLineHighlight: "all",
-            cursorBlinking: "smooth",
+            cursorBlinking: readOnly ? "solid" : "smooth",
             smoothScrolling: true,
             padding: { top: 12, bottom: 10 },
             overviewRulerBorder: false,
@@ -165,7 +169,7 @@ const CodeEditor = ({
               delay: 200,
             },
             suggest: {
-              showSnippets: true,
+              showSnippets: !readOnly,
               filterGraceful: true,
               snippetsPreventQuickSuggestions: false,
             },
@@ -174,30 +178,40 @@ const CodeEditor = ({
               horizontalScrollbarSize: 8,
             },
           }}
-          onChange={(value) => setCode(value || "")}
+          onChange={(value) => !readOnly && setCode(value || "")}
         />
       </div>
 
       {/* Editor Footer Status Bar with [+] Snippets button (LeetCode style) */}
       <div className="flex items-center justify-between px-3 py-1 bg-[#1a1a1a] border-t border-[#2e2e2e] text-[11px] text-gray-400 select-none flex-shrink-0 h-8">
         <div className="flex items-center space-x-2.5">
-          <div className="flex items-center space-x-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2cbb5d]" />
-            <span>Saved</span>
-          </div>
+          {readOnly ? (
+            <div className="flex items-center space-x-1.5 text-amber-400">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="font-semibold text-[10px] uppercase tracking-wider">Read-Only</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2cbb5d]" />
+              <span>Saved</span>
+            </div>
+          )}
 
           <span className="text-gray-600">|</span>
 
           {/* Snippets Button matching LeetCode */}
-          <button
-            type="button"
-            onClick={onOpenSnippetsModal}
-            title="Open Snippet Library (type /command to expand)"
-            className="inline-flex items-center space-x-1.5 text-xs text-white bg-[#1b8196] hover:bg-[#209bb4] px-2.5 py-0.5 rounded-md font-medium transition-colors shadow-sm active:scale-95"
-          >
-            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-            <span>Snippets</span>
-          </button>
+          {!readOnly && (
+            <Tooltip content="Open Snippet Library (or type / in editor)" side="top">
+              <button
+                type="button"
+                onClick={onOpenSnippetsModal}
+                className="inline-flex items-center space-x-1.5 text-xs text-black bg-[#ffa116] hover:bg-[#e08d0e] px-2.5 py-0.5 rounded-md font-semibold transition-all shadow-sm active:scale-95"
+              >
+                <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                <span>Snippets</span>
+              </button>
+            </Tooltip>
+          )}
         </div>
 
         <div className="font-mono text-gray-500">
