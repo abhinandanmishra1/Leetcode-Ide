@@ -30,6 +30,7 @@ export class ProcessSandbox {
     try {
       // 1. Compilation phase if required
       if (language.compile_cmd) {
+        logger.info({ token, compile_cmd: language.compile_cmd }, `🔨 Compiling [${language.name}]...`);
         try {
           await execAsync(language.compile_cmd, {
             cwd: scratchDir,
@@ -38,6 +39,7 @@ export class ProcessSandbox {
           });
         } catch (compileErr) {
           const compileOutput = compileErr.stderr || compileErr.stdout || compileErr.message;
+          logger.warn({ token, error: compileOutput.slice(0, 200) }, `❌ Compilation failed for [${language.name}]`);
           return {
             status: getStatusById(6), // Compilation Error
             stdout: null,
@@ -51,6 +53,7 @@ export class ProcessSandbox {
       }
 
       // 2. Execution phase with resource limits and stdin
+      logger.info({ token, run_cmd: language.run_cmd, timeout: `${timeoutSeconds}s` }, `🚀 Executing [${language.name}]...`);
       const startTime = process.hrtime.bigint();
       const runResult = await this.runProcess(language.run_cmd, scratchDir, stdin || '', timeoutMs);
       const endTime = process.hrtime.bigint();

@@ -5,6 +5,7 @@ import logger from '../utils/logger.js';
 import submissionsRouter from './routes/submissions.js';
 import languagesRouter from './routes/languages.js';
 import healthRouter from './routes/health.js';
+import requestLogger from './middleware/requestLogger.js';
 import { initializeQueue, closeQueue } from '../queue/producer.js';
 import { startWorker, stopWorker } from '../queue/worker.js';
 
@@ -17,6 +18,7 @@ export async function startServer(port = config.port) {
   const app = express();
   app.use(cors({ origin: config.clientUrl }));
   app.use(express.json({ limit: '10mb' }));
+  app.use(requestLogger);
 
   app.use('/health', healthRouter);
   app.use('/languages', languagesRouter);

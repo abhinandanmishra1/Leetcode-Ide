@@ -4,6 +4,7 @@ import { addSubmission, getSubmission } from '../../queue/producer.js';
 import { getLanguageById, getStatusById } from '../../languages/index.js';
 import { decodeIfNeeded, encodeIfNeeded } from '../../utils/base64.js';
 import { submissionRateLimiter } from '../middleware/rateLimiter.js';
+import logger from '../../utils/logger.js';
 
 const router = Router();
 
@@ -45,6 +46,7 @@ router.post('/', submissionRateLimiter, async (req, res, next) => {
     };
 
     await addSubmission(submission);
+    logger.info({ token: submission.token, language: language.name, id: language_id }, `📥 Queued submission [${language.name}]`);
 
     if (isWait) {
       const maxWait = 25000;

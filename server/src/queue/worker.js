@@ -12,9 +12,12 @@ let redis = null;
 const sandbox = new ProcessSandbox();
 
 async function handleExecution(submission) {
+  logger.info({ token: submission.token, language: submission.language?.name }, `⚙️ Worker processing [${submission.language?.name || submission.language_id}]`);
+
   // Pre-execution security check
   const scan = analyzeCode(submission.source_code, submission.language_id);
   if (scan.rejected) {
+    logger.warn({ token: submission.token, reason: scan.reason }, `🛡️ Code rejected by security scanner: ${scan.reason}`);
     return {
       ...submission,
       status: getStatusById(6),
@@ -28,6 +31,17 @@ async function handleExecution(submission) {
   }
 
   const result = await sandbox.execute(submission);
+  logger.info(
+    {
+      token: submission.token,
+      status: result.status?.description,
+      status_id: result.status?.id,
+      time: `${result.time}s`,
+      memory: `${result.memory}KB`,
+    },
+    `✅ Execution finished: [${result.status?.description || 'Finished'}] (${result.time}s, ${result.memory}KB)`
+  );
+
   return {
     ...submission,
     ...result,
