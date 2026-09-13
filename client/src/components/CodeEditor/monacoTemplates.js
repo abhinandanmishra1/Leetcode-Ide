@@ -3,11 +3,13 @@
  * Enables commands like /trie, /dsu, /segtree to autocomplete and expand snippets at cursor.
  */
 let providerDisposable = null;
+let currentTemplatesGetter = null;
 
 export const registerMonacoTemplates = (monaco, getAllTemplatesFn) => {
-  // Dispose existing provider if re-registering
+  currentTemplatesGetter = getAllTemplatesFn;
+
   if (providerDisposable) {
-    providerDisposable.dispose();
+    return providerDisposable;
   }
 
   const supportedLanguages = ["cpp", "python", "java", "javascript", "typescript", "c"];
@@ -27,16 +29,16 @@ export const registerMonacoTemplates = (monaco, getAllTemplatesFn) => {
       const matchText = match[0];
       const startColumn = position.column - matchText.length;
 
-      const templates = getAllTemplatesFn ? getAllTemplatesFn() : [];
+      const templates = currentTemplatesGetter ? currentTemplatesGetter() : [];
 
       const suggestions = templates.map((t) => ({
-        label: t.command, // e.g. "/trie"
+        label: t.command, // e.g. "/binarysearch"
         kind: monaco.languages.CompletionItemKind.Snippet,
         insertText: t.code,
         insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-        detail: `[Template] ${t.name}`,
+        detail: `[${t.languageName || "Snippet"}] ${t.name}`,
         documentation: {
-          value: `**${t.name}**\n\n${t.description || "Slash command code template"}\n\n\`\`\`\n${t.code.slice(0, 250)}...\n\`\`\``,
+          value: `**${t.name}** (${t.languageName || "Snippet"})\n\n${t.description || "Slash command code snippet"}\n\n\`\`\`\n${t.code.slice(0, 300)}...\n\`\`\``,
         },
         range: {
           startLineNumber: position.lineNumber,

@@ -8,13 +8,16 @@ import {
   faCheck,
   faCode,
   faBolt,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const SnippetLibraryModal = ({
   isOpen,
   onClose,
   allSnippets = [],
+  currentLanguage,
   onInsertSnippet,
+  onDeleteSnippet,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedCmd, setCopiedCmd] = useState(null);
@@ -40,16 +43,30 @@ export const SnippetLibraryModal = ({
     } catch {}
   };
 
+  const handleDelete = (snippet) => {
+    const confirmDelete = window.confirm(
+      `Delete snippet "${snippet.name}" (${snippet.command}) for ${currentLanguage?.name || "this language"} permanently?\n\nThis will remove it from your saved snippets and slash commands.`
+    );
+    if (confirmDelete && onDeleteSnippet) {
+      onDeleteSnippet(snippet.command, snippet.languageId || currentLanguage?.id);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div className="bg-[#242424] border border-[#3e3e3e] rounded-xl w-full max-w-xl shadow-2xl overflow-hidden font-sans text-xs text-gray-200 flex flex-col max-h-[80vh]">
         {/* Header matching LeetCode Snippet Library */}
         <div className="flex items-center justify-between px-4 py-3 bg-[#1e1e1e] border-b border-[#333333] flex-shrink-0">
           <div className="flex items-center space-x-2 text-sm font-semibold text-white">
-            <span className="text-gray-400">
+            <span className="text-[#ffa116]">
               <FontAwesomeIcon icon={faCode} />
             </span>
             <span>Snippet Library</span>
+            {currentLanguage && (
+              <span className="text-[11px] bg-[#2a2a2a] text-gray-300 border border-[#3e3e3e] px-2 py-0.5 rounded font-mono font-normal">
+                {currentLanguage.name}
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -71,7 +88,7 @@ export const SnippetLibraryModal = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search snippets e.g. /trie, /dsu, /segtree..."
+              placeholder="Search snippets e.g. /binarysearch, /trie..."
               className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#141414] border border-[#3e3e3e] text-white focus:outline-none focus:border-[#2cbb5d] transition-colors text-xs"
             />
           </div>
@@ -84,13 +101,14 @@ export const SnippetLibraryModal = ({
         {/* Compact Snippet Rows matching LeetCode */}
         <div className="flex-1 overflow-y-auto divide-y divide-[#2d2d2d] p-1">
           {filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              No snippets found matching "{searchQuery}"
+            <div className="p-8 text-center text-gray-500 space-y-1">
+              <p>No snippets found for {currentLanguage?.name || "this language"}.</p>
+              <p className="text-[11px] text-gray-600">Save a code with a slash command shortcut to create a new snippet.</p>
             </div>
           ) : (
             filtered.map((snippet) => (
               <div
-                key={snippet.command}
+                key={`${snippet.command}_${snippet.languageId || "all"}`}
                 className="flex items-center justify-between px-4 py-3 hover:bg-[#282828] transition-colors gap-3 group"
               >
                 {/* Left: Icon, Name, Command, Description */}
@@ -113,8 +131,8 @@ export const SnippetLibraryModal = ({
                   </div>
                 </div>
 
-                {/* Right: Copy & Insert Buttons */}
-                <div className="flex items-center space-x-2 flex-shrink-0">
+                {/* Right: Copy, Delete, and Insert Buttons */}
+                <div className="flex items-center space-x-1.5 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => handleCopy(snippet)}
@@ -129,12 +147,21 @@ export const SnippetLibraryModal = ({
 
                   <button
                     type="button"
+                    onClick={() => handleDelete(snippet)}
+                    title="Delete snippet permanently"
+                    className="p-1.5 text-gray-500 hover:text-red-400 rounded bg-[#2d2d2d] hover:bg-[#383838] transition-colors text-xs"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       onInsertSnippet(snippet.code);
                       onClose();
                     }}
                     title="Insert into editor at cursor"
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#1b8196] hover:bg-[#209bb4] text-white transition-colors shadow"
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#1b8196] hover:bg-[#209bb4] text-white transition-colors shadow ml-1"
                   >
                     <FontAwesomeIcon icon={faPlus} className="text-xs" />
                   </button>

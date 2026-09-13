@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk, faTimes, faCode, faBolt, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
-import { normalizeId, normalizeCommand, getSavedProblems } from "../../utils/storage";
+import { normalizeId, normalizeCommand, getSavedProblems, findExistingTemplate } from "../../utils/storage";
 
 export const SaveModal = ({
   isOpen,
@@ -18,15 +18,27 @@ export const SaveModal = ({
   const normalizedCmd = useMemo(() => (command.trim() ? normalizeCommand(command) : ""), [command]);
 
   const existingProblems = useMemo(() => getSavedProblems(), [isOpen]);
-  const isDuplicate = useMemo(() => {
+  const isDuplicateProblem = useMemo(() => {
     return existingProblems.some((p) => p.id === normalizedId);
   }, [existingProblems, normalizedId]);
+
+  const existingTemplate = useMemo(() => {
+    if (!normalizedCmd || !currentLanguage?.id) return null;
+    return findExistingTemplate(normalizedCmd, currentLanguage.id);
+  }, [normalizedCmd, currentLanguage]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    if (normalizedCmd && existingTemplate) {
+      const confirmOverride = window.confirm(
+        `A template with command "${normalizedCmd}" already exists for ${currentLanguage?.name || "this language"}.\n\nAre you sure you want to override it?`
+      );
+      if (!confirmOverride) return;
+    }
 
     onSave({
       id: normalizedId,
@@ -124,11 +136,20 @@ export const SaveModal = ({
             )}
           </div>
 
-          {/* Duplicate Warning */}
-          {isDuplicate && (
+          {/* Warnings */}
+          {isDuplicateProblem && (
             <div className="flex items-center space-x-2 p-2 rounded-lg bg-amber-950/40 border border-amber-800/60 text-amber-300 text-[11px]">
               <FontAwesomeIcon icon={faExclamationTriangle} className="text-xs flex-shrink-0" />
-              <span>An item with this ID already exists. Saving will overwrite the previous version.</span>
+              <span>A saved code with this ID already exists. Saving will overwrite it.</span>
+            </div>
+          )}
+
+          {existingTemplate && (
+            <div className="flex items-center space-x-2 p-2 rounded-lg bg-amber-950/40 border border-amber-800/60 text-amber-300 text-[11px]">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="text-xs flex-shrink-0" />
+              <span>
+                A template with shortcut <strong>{normalizedCmd}</strong> already exists for {currentLanguage?.name || "this language"}. Saving will update and override it.
+              </span>
             </div>
           )}
 

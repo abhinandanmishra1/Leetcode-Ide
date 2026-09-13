@@ -1,9 +1,12 @@
+import { INITIAL_SEEDED_TEMPLATES } from "../components/Templates/defaultTemplates";
+
 const CODE_PREFIX = "leetcode_ide_code_";
 const STDIN_PREFIX = "leetcode_ide_stdin_";
 const TESTCASES_PREFIX = "leetcode_ide_testcases_";
 const LAST_LANG_KEY = "leetcode_ide_last_lang";
 const SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
-const CUSTOM_TEMPLATES_KEY = "leetcode_ide_custom_templates";
+const TEMPLATES_KEY = "leetcode_ide_templates";
+const TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v2";
 
 export const DEFAULT_TESTCASES = [
   { id: "1", name: "Case 1", input: "", expected: "" },
@@ -180,56 +183,89 @@ export const deleteProblem = (id) => {
 };
 
 // ============================================================
-// CUSTOM SLASH COMMAND TEMPLATES
+// LANGUAGE-SPECIFIC SLASH COMMAND TEMPLATES
 // ============================================================
 
-export const getCustomTemplates = () => {
+/**
+ * Loads templates from localStorage.
+ * Seeds INITIAL_SEEDED_TEMPLATES on first run only.
+ * If languageId is provided, returns templates for that language.
+ */
+export const getTemplates = (languageId) => {
   try {
-    const raw = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
-    if (!raw) return [];
-    const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    const isSeeded = localStorage.getItem(TEMPLATES_SEEDED_KEY);
+    let list = [];
+    if (!isSeeded) {
+      list = [...INITIAL_SEEDED_TEMPLATES];
+      localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));
+      localStorage.setItem(TEMPLATES_SEEDED_KEY, "true");
+    } else {
+      const raw = localStorage.getItem(TEMPLATES_KEY);
+      list = raw ? JSON.parse(raw) : [];
+    }
+
+    if (languageId) {
+      return list.filter((t) => !t.languageId || t.languageId === languageId);
+    }
+    return list;
   } catch {
     return [];
   }
 };
 
-export const saveCustomTemplate = (template) => {
+export const findExistingTemplate = (command, languageId) => {
+  if (!command) return null;
+  const normCmd = normalizeCommand(command);
+  const all = getTemplates();
+  return all.find((t) => t.command === normCmd && (!t.languageId || t.languageId === languageId)) || null;
+};
+
+export const saveTemplate = (template) => {
   try {
-    const list = getCustomTemplates();
-    const command = normalizeCommand(template.command);
-    const existingIndex = list.findIndex((t) => t.command === command);
+    const normCmd = normalizeCommand(template.command);
+    const all = getTemplates(); // all languages
+
+    const existingIndex = all.findIndex(
+      (t) => t.command === normCmd && t.languageId === template.languageId
+    );
 
     const item = {
       ...template,
-      command,
+      command: normCmd,
       updatedAt: Date.now(),
     };
 
     if (existingIndex >= 0) {
-      list[existingIndex] = item;
+      all[existingIndex] = item;
     } else {
-      list.push(item);
+      all.unshift(item);
     }
 
-    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(list));
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(all));
     return item;
   } catch (e) {
-    console.warn("Failed to save template:", e);
+    console.warn("Failed to save template to localStorage:", e);
     return null;
   }
 };
 
-export const deleteCustomTemplate = (command) => {
+export const deleteTemplate = (command, languageId) => {
   try {
-    const norm = normalizeCommand(command);
-    const list = getCustomTemplates().filter((t) => t.command !== norm);
-    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(list));
+    const normCmd = normalizeCommand(command);
+    const all = getTemplates(); // all languages
+    const filtered = all.filter(
+      (t) => !(t.command === normCmd && (!languageId || t.languageId === languageId))
+    );
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(filtered));
     return true;
   } catch (e) {
     return false;
   }
 };
+
+export const getCustomTemplates = getTemplates;
+export const saveCustomTemplate = saveTemplate;
+export const deleteCustomTemplate = deleteTemplate;
 
 const storageService = {
   normalizeId,
@@ -248,6 +284,10 @@ const storageService = {
   getSavedProblem,
   saveProblem,
   deleteProblem,
+  getTemplates,
+  findExistingTemplate,
+  saveTemplate,
+  deleteTemplate,
   getCustomTemplates,
   saveCustomTemplate,
   deleteCustomTemplate,
