@@ -145,3 +145,66 @@ public class Solution {
   assert.strictEqual(result.stdout.trim(), 'Java Solution Works!');
   assert.strictEqual(result.exit_code, 0);
 });
+
+test('executor runs C++ without explicit headers (auto-included bits/stdc++.h)', async () => {
+  // No #include, no using namespace std
+  const cppNoHeaders = `
+int main() {
+    vector<int> nums = {10, 20, 30};
+    for (int x : nums) cout << x << " ";
+    cout << endl;
+    return 0;
+}
+`;
+  const submission = {
+    token: 'test-cpp-auto-headers',
+    source_code: cppNoHeaders,
+    language: getLanguageById(54),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), '10 20 30');
+});
+
+test('executor runs Python without explicit imports (auto-imported Counter, deque)', async () => {
+  // No import collections, no import sys
+  const pyNoImports = `
+c = Counter(["apple", "banana", "apple"])
+d = deque([1, 2, 3])
+d.append(4)
+print(c["apple"], list(d))
+`;
+  const submission = {
+    token: 'test-py-auto-imports',
+    source_code: pyNoImports,
+    language: getLanguageById(71),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), '2 [1, 2, 3, 4]');
+});
+
+test('executor runs Java without explicit imports (auto-imported java.util.*)', async () => {
+  // No import java.util.*
+  const javaNoImports = `
+public class Solution {
+    public static void main(String[] args) {
+        List<String> list = new ArrayList<>();
+        list.add("Auto");
+        list.add("Imports");
+        System.out.println(String.join(" ", list));
+    }
+}
+`;
+  const submission = {
+    token: 'test-java-auto-imports',
+    source_code: javaNoImports,
+    language: getLanguageById(62),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'Auto Imports');
+});
