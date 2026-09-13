@@ -52,6 +52,44 @@ const CodeEditor = ({
 
     monaco.editor.setTheme("leetcode-dark");
 
+    // Configure TypeScript & JavaScript compiler options and add ambient Node.js type definitions
+    if (monaco.languages && monaco.languages.typescript) {
+      monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.ES2022,
+        allowNonTextFiles: true,
+        allowJs: true,
+        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.languages.typescript.ModuleKind.CommonJS,
+        noEmit: true,
+        esModuleInterop: true,
+      });
+
+      // Add ambient declarations for fs and competitive programming I/O helpers
+      const ambientNodeTypes = `
+        declare module 'fs' {
+          export function readFileSync(fd: number | string, options?: any): any;
+          export function writeFileSync(path: string, data: any, options?: any): void;
+        }
+        declare const require: (moduleName: string) => any;
+        declare const process: any;
+        declare function getNumInput(): number;
+        declare function getStringInput(): string;
+        declare function getArrayInput(n: number): number[];
+      `;
+
+      monaco.languages.typescript.typescriptDefaults.addExtraLib(
+        ambientNodeTypes,
+        'ts:node-globals.d.ts'
+      );
+
+      if (monaco.languages.typescript.javascriptDefaults) {
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(
+          ambientNodeTypes,
+          'ts:node-globals-js.d.ts'
+        );
+      }
+    }
+
     // Register slash command template completion provider
     if (getAllTemplates) {
       registerMonacoTemplates(monaco, getAllTemplates);
@@ -108,8 +146,13 @@ const CodeEditor = ({
             renderLineHighlight: "all",
             cursorBlinking: "smooth",
             smoothScrolling: true,
-            padding: { top: 10, bottom: 10 },
+            padding: { top: 12, bottom: 10 },
             overviewRulerBorder: false,
+            fixedOverflowWidgets: true,
+            hover: {
+              enabled: true,
+              delay: 200,
+            },
             suggest: {
               showSnippets: true,
               filterGraceful: true,

@@ -9,13 +9,17 @@ const __dirname = path.dirname(__filename);
 const localTsc = path.resolve(__dirname, '../../node_modules/.bin/tsc');
 const tscCmd = fs.existsSync(localTsc) ? `"${localTsc}"` : 'tsc';
 
+// Locate node_modules/@types for Node type declarations (fs, process, etc.)
+const typesDir = path.resolve(__dirname, '../../node_modules/@types');
+const typeRootsFlag = fs.existsSync(typesDir) ? `--typeRoots "${typesDir}" --types node` : '';
+
 export default {
   id: 74,
   name: 'TypeScript (Node.js 20)',
   label: 'TypeScript',
   value: 'typescript',
   source_file: 'Solution.ts',
-  compile_cmd: `${tscCmd} --target es2022 --module commonjs --skipLibCheck Solution.ts`,
+  compile_cmd: `${tscCmd} --target es2022 --module commonjs --skipLibCheck ${typeRootsFlag} Solution.ts`,
   run_cmd: 'node Solution.js',
   default_cpu_limit: 3.0,
   default_memory_limit: 262144,
@@ -24,10 +28,7 @@ export default {
     let prefix = '';
 
     if (!/\b(const|let|var)\s+fs\b/.test(code) && !/import\s+.*from\s+['"]fs['"]/.test(code)) {
-      if (!/declare\s+const\s+require/.test(code)) {
-        prefix += 'declare const require: any;\n';
-      }
-      prefix += 'const fs: any = require("fs");\n';
+      prefix += 'import * as fs from "fs";\n';
     }
 
     // Provide standard CP input parsing utilities if not declared

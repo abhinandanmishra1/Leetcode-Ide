@@ -251,3 +251,21 @@ main();
   assert.strictEqual(result.stdout.trim(), 'JS: 3, beta, 100,200,300');
 });
 
+test('executor compiles and runs TypeScript with explicit import * as fs from fs', async () => {
+  const tsCode = `
+import * as fs from 'fs';
+const raw = fs.readFileSync(0, 'utf-8').trim();
+console.log('Read:', raw);
+`;
+  const submission = {
+    token: 'test-ts-explicit-fs',
+    source_code: tsCode,
+    language: getLanguageById(74),
+    stdin: 'hello typescript',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'Read: hello typescript');
+});
+
+
