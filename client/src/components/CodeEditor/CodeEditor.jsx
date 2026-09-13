@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCode, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { registerMonacoTemplates } from "./monacoTemplates";
+import Tooltip from "../ui/tooltip";
 
 const CodeEditor = ({
   code,
@@ -200,15 +201,16 @@ const CodeEditor = ({
 
           {/* Snippets Button matching LeetCode */}
           {!readOnly && (
-            <button
-              type="button"
-              onClick={onOpenSnippetsModal}
-              title="Open Snippet Library (type /command to expand)"
-              className="inline-flex items-center space-x-1.5 text-xs text-black bg-[#ffa116] hover:bg-[#e08d0e] px-2.5 py-0.5 rounded-md font-semibold transition-all shadow-sm active:scale-95"
-            >
-              <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-              <span>Snippets</span>
-            </button>
+            <Tooltip content="Open Snippet Library (or type / in editor)" side="top">
+              <button
+                type="button"
+                onClick={onOpenSnippetsModal}
+                className="inline-flex items-center space-x-1.5 text-xs text-black bg-[#ffa116] hover:bg-[#e08d0e] px-2.5 py-0.5 rounded-md font-semibold transition-all shadow-sm active:scale-95"
+              >
+                <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                <span>Snippets</span>
+              </button>
+            </Tooltip>
           )}
         </div>
 

@@ -21,6 +21,7 @@ import LanguageDropdown from "../Dropdowns/LanguageDropdown";
 import { CodePadBrand } from "../Brand/CodePadLogo";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
+import Tooltip from "../ui/tooltip";
 
 const Navbar = ({
   language,
@@ -102,27 +103,29 @@ const Navbar = ({
 
         {/* Combined Local Save Button + Dropdown */}
         <div className="relative inline-flex items-center" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={onOpenSaveModal}
-            title="Save current code locally (Ctrl/Cmd+S)"
-            className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-l-md transition-colors"
-          >
-            <FontAwesomeIcon icon={faFloppyDisk} className="text-xs text-[#ffa116]" />
-            <span className="font-semibold hidden sm:inline">Save</span>
-          </button>
+          <Tooltip content="Save snippet (Ctrl + S)" side="bottom">
+            <button
+              type="button"
+              onClick={onOpenSaveModal}
+              className="inline-flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-l-md transition-colors"
+            >
+              <FontAwesomeIcon icon={faFloppyDisk} className="text-xs text-[#ffa116]" />
+              <span className="font-semibold hidden sm:inline">Save</span>
+            </button>
+          </Tooltip>
 
-          <button
-            type="button"
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            title="View saved codes"
-            className="px-2 py-1.5 text-xs text-gray-300 bg-[#333333] hover:bg-[#3f3f3f] border-t border-r border-b border-[#4a4a4a] rounded-r-md transition-colors hover:text-white"
-          >
-            <FontAwesomeIcon
-              icon={faChevronDown}
-              className={`text-[10px] transition-transform duration-150 ${dropdownOpen ? "rotate-180" : ""}`}
-            />
-          </button>
+          <Tooltip content="Browse saved codes" side="bottom">
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="px-2 py-1.5 text-xs text-gray-300 bg-[#333333] hover:bg-[#3f3f3f] border-t border-r border-b border-[#4a4a4a] rounded-r-md transition-colors hover:text-white"
+            >
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={`text-[10px] transition-transform duration-150 ${dropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+          </Tooltip>
 
           {/* Local Saved Codes Dropdown Menu */}
           {dropdownOpen && (
@@ -144,8 +147,8 @@ const Navbar = ({
                     type="text"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
-                    placeholder="Search saved..."
-                    className="w-full pl-7 pr-2 py-1 rounded bg-[#141414] border border-[#333333] text-gray-200 focus:outline-none focus:border-[#ffa116] text-[11px]"
+                    placeholder="Filter saved codes..."
+                    className="w-full pl-7 pr-2.5 py-1 bg-[#121212] border border-[#3e3e3e] rounded text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#ffa116]"
                   />
                 </div>
               </div>
@@ -218,70 +221,76 @@ const Navbar = ({
 
         {/* Share Button */}
         {onShare && (
-          <button
-            type="button"
-            onClick={onShare}
-            title="Share snippet with unique link"
-            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-md transition-colors"
-          >
-            <FontAwesomeIcon icon={faShareNodes} className="text-xs text-[#00b4d8]" />
-            <span className="font-semibold hidden sm:inline">Share</span>
-          </button>
+          <Tooltip content="Share snippet with unique link" side="bottom">
+            <button
+              type="button"
+              onClick={onShare}
+              className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#333333] hover:bg-[#3f3f3f] border border-[#4a4a4a] rounded-md transition-colors"
+            >
+              <FontAwesomeIcon icon={faShareNodes} className="text-xs text-[#00b4d8]" />
+              <span className="font-semibold hidden sm:inline">Share</span>
+            </button>
+          </Tooltip>
         )}
 
         {/* Reset button */}
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={isRunning}
-          title="Reset code to default boilerplate"
-          className="flex items-center space-x-1 px-2 py-1.5 text-xs text-gray-300 bg-[#333333] hover:bg-[#3f3f3f] border border-[#444444] rounded-md transition-colors disabled:opacity-50"
-        >
-          <FontAwesomeIcon icon={faRotateLeft} className="text-xs text-gray-400" />
-          <span className="hidden lg:inline">Reset</span>
-        </button>
+        <Tooltip content="Reset code to default template" side="bottom">
+          <button
+            type="button"
+            onClick={onReset}
+            disabled={isRunning}
+            className="flex items-center space-x-1 px-2 py-1.5 text-xs text-gray-300 bg-[#333333] hover:bg-[#3f3f3f] border border-[#444444] rounded-md transition-colors disabled:opacity-50"
+          >
+            <FontAwesomeIcon icon={faRotateLeft} className="text-xs text-gray-400" />
+            <span className="hidden lg:inline">Reset</span>
+          </button>
+        </Tooltip>
       </div>
 
       {/* Right Controls: Run Button & User Profile / Login */}
       <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={isRunning}
-          className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 rounded-md text-xs font-semibold text-white shadow transition-all ${
-            isRunning
-              ? "bg-[#258547] cursor-not-allowed opacity-80"
-              : "bg-[#2cbb5d] hover:bg-[#26a050] active:scale-95"
-          }`}
-        >
-          {isRunning ? (
-            <>
-              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
-              <span>Running...</span>
-            </>
-          ) : (
-            <>
-              <FontAwesomeIcon icon={faPlay} className="text-[11px]" />
-              <span>Run</span>
-            </>
-          )}
-        </button>
+        <Tooltip content="Run code against test cases (Ctrl + Enter)" side="bottom">
+          <button
+            type="button"
+            onClick={onRun}
+            disabled={isRunning}
+            className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 rounded-md text-xs font-semibold text-white shadow transition-all ${
+              isRunning
+                ? "bg-[#258547] cursor-not-allowed opacity-80"
+                : "bg-[#2cbb5d] hover:bg-[#26a050] active:scale-95"
+            }`}
+          >
+            {isRunning ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
+                <span>Running...</span>
+              </>
+            ) : (
+              <>
+                <FontAwesomeIcon icon={faPlay} className="text-[11px]" />
+                <span>Run</span>
+              </>
+            )}
+          </button>
+        </Tooltip>
 
         {/* User Authentication Menu */}
         {user ? (
           <div className="relative" ref={userMenuRef}>
-            <button
-              type="button"
-              onClick={() => setUserMenuOpen((prev) => !prev)}
-              className="flex items-center space-x-1.5 p-1 rounded-full hover:ring-2 hover:ring-[#ffa116] transition-all"
-            >
-              <UserAvatar
-                avatar={user.avatar}
-                name={user.name}
-                username={user.username}
-                size="md"
-              />
-            </button>
+            <Tooltip content={`@${user.username} (Profile & Menu)`} side="bottom">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center space-x-1.5 p-1 rounded-full hover:ring-2 hover:ring-[#ffa116] transition-all"
+              >
+                <UserAvatar
+                  avatar={user.avatar}
+                  name={user.name}
+                  username={user.username}
+                  size="md"
+                />
+              </button>
+            </Tooltip>
 
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-52 bg-[#222222] border border-[#3e3e3e] rounded-lg shadow-2xl z-50 overflow-hidden text-xs text-gray-200 animate-in fade-in zoom-in-95 duration-100">
@@ -322,14 +331,16 @@ const Navbar = ({
             )}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={onOpenAuthModal}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold bg-[#383838] hover:bg-[#444444] text-white border border-[#4f4f4f] rounded-md transition-all shadow active:scale-95"
-          >
-            <FontAwesomeIcon icon={faUser} className="text-[11px] text-[#ffa116]" />
-            <span>Sign In</span>
-          </button>
+          <Tooltip content="Sign in with Google" side="bottom">
+            <button
+              type="button"
+              onClick={onOpenAuthModal}
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold bg-[#383838] hover:bg-[#444444] text-white border border-[#4f4f4f] rounded-md transition-all shadow active:scale-95"
+            >
+              <FontAwesomeIcon icon={faUser} className="text-[11px] text-[#ffa116]" />
+              <span>Sign In</span>
+            </button>
+          </Tooltip>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCodeFork, faLock } from "@fortawesome/free-solid-svg-icons";
 import UserAvatar from "../common/UserAvatar";
+import Tooltip from "../ui/tooltip";
 
 const SharedBanner = ({ snippet, onFork, isForking }) => {
   if (!snippet) return null;
@@ -74,15 +75,17 @@ const SharedBanner = ({ snippet, onFork, isForking }) => {
           <span>Read-Only Preview</span>
         </div>
 
-        <button
-          type="button"
-          onClick={onFork}
-          disabled={isForking}
-          className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ffa116] hover:bg-[#e08d0e] text-black font-semibold rounded-md shadow transition-all active:scale-95 disabled:opacity-50 text-xs"
-        >
-          <FontAwesomeIcon icon={faCodeFork} className="text-xs" />
-          <span>{isForking ? "Forking..." : "Fork to My Editor"}</span>
-        </button>
+        <Tooltip content="Clone this code to your editor to modify & run" side="bottom">
+          <button
+            type="button"
+            onClick={onFork}
+            disabled={isForking}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ffa116] hover:bg-[#e08d0e] text-black font-semibold rounded-md shadow transition-all active:scale-95 disabled:opacity-50 text-xs"
+          >
+            <FontAwesomeIcon icon={faCodeFork} className="text-xs" />
+            <span>{isForking ? "Forking..." : "Fork to My Editor"}</span>
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

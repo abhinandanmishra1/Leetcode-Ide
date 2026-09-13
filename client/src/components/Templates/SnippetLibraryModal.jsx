@@ -10,6 +10,7 @@ import {
   faBolt,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import Tooltip from "../ui/tooltip";
 
 export const SnippetLibraryModal = ({
   isOpen,
@@ -133,38 +134,41 @@ export const SnippetLibraryModal = ({
 
                 {/* Right: Copy, Delete, and Insert Buttons */}
                 <div className="flex items-center space-x-1.5 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(snippet)}
-                    title="Copy snippet code"
-                    className="p-1.5 text-gray-400 hover:text-white rounded bg-[#2d2d2d] hover:bg-[#383838] transition-colors text-xs"
-                  >
-                    <FontAwesomeIcon
-                      icon={copiedCmd === snippet.command ? faCheck : faCopy}
-                      className={copiedCmd === snippet.command ? "text-[#2cbb5d]" : ""}
-                    />
-                  </button>
+                  <Tooltip content="Copy snippet code" side="top">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(snippet)}
+                      className="p-1.5 text-gray-400 hover:text-white rounded bg-[#2d2d2d] hover:bg-[#383838] transition-colors text-xs"
+                    >
+                      <FontAwesomeIcon
+                        icon={copiedCmd === snippet.command ? faCheck : faCopy}
+                        className={copiedCmd === snippet.command ? "text-[#2cbb5d]" : ""}
+                      />
+                    </button>
+                  </Tooltip>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(snippet)}
-                    title="Delete snippet permanently"
-                    className="p-1.5 text-gray-500 hover:text-red-400 rounded bg-[#2d2d2d] hover:bg-[#383838] transition-colors text-xs"
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
+                  <Tooltip content="Delete snippet" side="top">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(snippet)}
+                      className="p-1.5 text-gray-500 hover:text-red-400 rounded bg-[#2d2d2d] hover:bg-[#383838] transition-colors text-xs"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </Tooltip>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onInsertSnippet(snippet.code);
-                      onClose();
-                    }}
-                    title="Insert into editor at cursor"
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-[#1b8196] hover:bg-[#209bb4] text-white transition-colors shadow ml-1"
-                  >
-                    <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                  </button>
+                  <Tooltip content="Insert into editor" side="top">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onInsertSnippet(snippet.code);
+                        onClose();
+                      }}
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-[#ffa116] hover:bg-[#e08d0e] text-black font-semibold transition-all shadow active:scale-95 ml-1"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             ))
