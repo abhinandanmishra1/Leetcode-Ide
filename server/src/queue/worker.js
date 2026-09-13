@@ -5,13 +5,15 @@ import logger from '../utils/logger.js';
 import { inMemoryQueue } from './inMemoryQueue.js';
 import { analyzeCode } from '../security/codeAnalyzer.js';
 import { ProcessSandbox } from '../executor/ProcessSandbox.js';
-import { getStatusById } from '../languages/index.js';
+import { getLanguageById, getStatusById } from '../languages/index.js';
 
 let bullWorker = null;
 let redis = null;
 const sandbox = new ProcessSandbox();
 
 async function handleExecution(submission) {
+  const language = getLanguageById(submission.language_id) || submission.language;
+  submission.language = language;
   logger.info({ token: submission.token, language: submission.language?.name }, `⚙️ Worker processing [${submission.language?.name || submission.language_id}]`);
 
   // Pre-execution security check

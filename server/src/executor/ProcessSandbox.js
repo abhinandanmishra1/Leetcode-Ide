@@ -5,7 +5,7 @@ import os from 'os';
 import { promisify } from 'util';
 import config from '../utils/config.js';
 import logger from '../utils/logger.js';
-import { getStatusById } from '../languages/index.js';
+import { getLanguageById, getStatusById } from '../languages/index.js';
 import ResultParser from './ResultParser.js';
 
 const execAsync = promisify(exec);
@@ -16,7 +16,8 @@ export class ProcessSandbox {
   }
 
   async execute(submission) {
-    const { token, source_code, language, stdin, cpu_time_limit } = submission;
+    const { token, source_code, stdin, cpu_time_limit } = submission;
+    const language = getLanguageById(submission.language_id) || submission.language;
     const timeoutSeconds = cpu_time_limit || language.default_cpu_limit || 3.0;
     const timeoutMs = Math.round(timeoutSeconds * 1000);
 
