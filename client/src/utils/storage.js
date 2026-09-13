@@ -69,12 +69,12 @@ export const normalizeCommand = (cmd) => {
 export const getItemWithFallback = (newKey, legacyKey) => {
   try {
     const newVal = localStorage.getItem(newKey);
-    if (newVal !== null && newVal !== "") {
+    if (newVal !== null) {
       return newVal;
     }
     if (legacyKey) {
       const legacyVal = localStorage.getItem(legacyKey);
-      if (legacyVal !== null && legacyVal !== "") {
+      if (legacyVal !== null) {
         try {
           localStorage.setItem(newKey, legacyVal);
         } catch (e) {
@@ -83,7 +83,7 @@ export const getItemWithFallback = (newKey, legacyKey) => {
         return legacyVal;
       }
     }
-    return newVal;
+    return null;
   } catch (e) {
     return null;
   }
