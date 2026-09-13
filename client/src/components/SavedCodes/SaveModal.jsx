@@ -54,7 +54,7 @@ export const SaveModal = ({
             <span className="text-[#ffa116]">
               <FontAwesomeIcon icon={faFloppyDisk} />
             </span>
-            <span>Save Code & Testcases</span>
+            <span>Save Snippet / Code</span>
           </div>
           <button
             type="button"

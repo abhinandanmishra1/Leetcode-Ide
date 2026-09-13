@@ -1,10 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCode } from "@fortawesome/free-solid-svg-icons";
+import { faCode, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { registerMonacoTemplates } from "./monacoTemplates";
 
-const CodeEditor = ({ code, setCode, language, getAllTemplates, editorInstanceRef }) => {
+const CodeEditor = ({
+  code,
+  setCode,
+  language,
+  getAllTemplates,
+  editorInstanceRef,
+  onOpenSnippetsModal,
+}) => {
   const languageValue = typeof language === "string" ? language : (language?.value || "cpp");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const internalEditorRef = useRef(null);
@@ -76,10 +83,8 @@ const CodeEditor = ({ code, setCode, language, getAllTemplates, editorInstanceRe
           </span>
           <span>Code</span>
         </div>
-        <div className="flex items-center space-x-2 text-gray-400 text-xs font-mono">
-          <span>Type <code className="text-[#2cbb5d]">/</code> for templates</span>
-          <span>•</span>
-          <span>{language?.name || "C++"}</span>
+        <div className="text-gray-400 text-xs font-mono">
+          {language?.name || "C++"}
         </div>
       </div>
 
@@ -119,12 +124,28 @@ const CodeEditor = ({ code, setCode, language, getAllTemplates, editorInstanceRe
         />
       </div>
 
-      {/* Editor Footer Status Bar */}
-      <div className="flex items-center justify-between px-3 py-1 bg-[#1a1a1a] border-t border-[#2e2e2e] text-[11px] text-gray-400 select-none flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2cbb5d]" />
-          <span>Saved</span>
+      {/* Editor Footer Status Bar with [+] Snippets button (LeetCode style) */}
+      <div className="flex items-center justify-between px-3 py-1 bg-[#1a1a1a] border-t border-[#2e2e2e] text-[11px] text-gray-400 select-none flex-shrink-0 h-8">
+        <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2cbb5d]" />
+            <span>Saved</span>
+          </div>
+
+          <span className="text-gray-600">|</span>
+
+          {/* Snippets Button matching LeetCode */}
+          <button
+            type="button"
+            onClick={onOpenSnippetsModal}
+            title="Open Snippet Library (type /command to expand)"
+            className="inline-flex items-center space-x-1.5 text-xs text-white bg-[#1b8196] hover:bg-[#209bb4] px-2.5 py-0.5 rounded-md font-medium transition-colors shadow-sm active:scale-95"
+          >
+            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+            <span>Snippets</span>
+          </button>
         </div>
+
         <div className="font-mono text-gray-500">
           Ln {cursorPos.line}, Col {cursorPos.col}
         </div>

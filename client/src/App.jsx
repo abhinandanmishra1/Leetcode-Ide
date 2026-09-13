@@ -4,8 +4,7 @@ import ConsolePanel from "./components/Console/ConsolePanel";
 import Navbar from "./components/Navbar/Navbar";
 import SplitPane from "./components/SplitPane/SplitPane";
 import SaveModal from "./components/SavedCodes/SaveModal";
-import SavedCodesModal from "./components/SavedCodes/SavedCodesModal";
-import TemplatesModal from "./components/Templates/TemplatesModal";
+import SnippetLibraryModal from "./components/Templates/SnippetLibraryModal";
 import DEFAULT_TEMPLATES from "./components/Templates/defaultTemplates";
 import { LANGUAGES } from "./constants/languages";
 import { boilerCodes } from "./boilerCodes";
@@ -23,7 +22,6 @@ import {
   deleteProblem,
   getCustomTemplates,
   saveCustomTemplate,
-  deleteCustomTemplate,
 } from "./utils/storage";
 
 // Safe base64 decoding helper
@@ -62,8 +60,7 @@ function App() {
 
   // Modals state
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [isSavedCodesModalOpen, setIsSavedCodesModalOpen] = useState(false);
-  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
+  const [isSnippetsModalOpen, setIsSnippetsModalOpen] = useState(false);
 
   // Saved collections state
   const [savedProblems, setSavedProblems] = useState(() => getSavedProblems());
@@ -79,7 +76,7 @@ function App() {
     }
   }, [testCases, activeCaseId]);
 
-  // Combine default and custom slash templates
+  // Combine default templates and custom templates
   const getAllTemplates = useCallback(() => {
     const map = new Map();
     DEFAULT_TEMPLATES.forEach((t) => map.set(t.command, t));
@@ -87,12 +84,12 @@ function App() {
     return Array.from(map.values());
   }, [customTemplates]);
 
-  // Show a temporary toast banner
+  // Show temporary toast notification
   const showToast = (message, type = "success") => {
     setToastMessage({ message, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 3500);
   };
 
   // When language changes: load saved code & test cases for that language
@@ -169,32 +166,30 @@ function App() {
     }
   };
 
-  // Save problem and optionally save slash command template
+  // Save problem/snippet (and optionally register slash command)
   const handleSaveProblem = (problemData) => {
     const saved = saveProblem(problemData);
     if (saved) {
       setSavedProblems(getSavedProblems());
 
-      // If user also provided a slash command shortcut, save it as a template too!
       if (problemData.command) {
         saveCustomTemplate({
           command: problemData.command,
           name: problemData.name,
-          description: `Custom template for ${problemData.name}`,
+          description: `Custom snippet for ${problemData.name}`,
           code: problemData.code,
           isCustom: true,
         });
         setCustomTemplates(getCustomTemplates());
-        showToast(`Saved "${saved.name}" (ID: ${saved.id}) with slash command ${problemData.command}!`);
+        showToast(`Saved "${saved.name}" with command ${problemData.command}!`);
       } else {
-        showToast(`Saved "${saved.name}" (ID: ${saved.id}) successfully!`);
+        showToast(`Saved "${saved.name}" (ID: ${saved.id})!`);
       }
     }
   };
 
   // Load a saved problem into the active workspace
   const handleLoadProblem = (problem) => {
-    // Find matching language object
     const matchedLang = LANGUAGES.find((l) => l.id === problem.languageId) || language;
     setLanguage(matchedLang);
     saveLanguage(matchedLang);
@@ -212,14 +207,14 @@ function App() {
 
     setResults(null);
     setOverallStatus(null);
-    showToast(`Loaded "${problem.name}" into the editor!`);
+    showToast(`Loaded "${problem.name}" into editor!`);
   };
 
   // Delete a saved problem
   const handleDeleteProblem = (id) => {
     deleteProblem(id);
     setSavedProblems(getSavedProblems());
-    showToast("Problem deleted from saved codes.", "info");
+    showToast("Snippet deleted.", "info");
   };
 
   // Insert template code directly into Monaco editor at cursor position
@@ -227,7 +222,7 @@ function App() {
     const editor = editorInstanceRef.current;
     if (editor) {
       const selection = editor.getSelection();
-      editor.executeEdits("template-insert", [
+      editor.executeEdits("snippet-insert", [
         {
           range: selection,
           text: templateCode,
@@ -238,21 +233,7 @@ function App() {
     } else {
       setCode((prev) => prev + "\n" + templateCode);
     }
-    showToast("Template inserted into editor!");
-  };
-
-  // Save custom template
-  const handleSaveCustomTemplate = (tpl) => {
-    saveCustomTemplate(tpl);
-    setCustomTemplates(getCustomTemplates());
-    showToast(`Custom template ${tpl.command} created!`);
-  };
-
-  // Delete custom template
-  const handleDeleteCustomTemplate = (cmd) => {
-    deleteCustomTemplate(cmd);
-    setCustomTemplates(getCustomTemplates());
-    showToast(`Template ${cmd} deleted.`, "info");
+    showToast("Snippet inserted into editor!");
   };
 
   // Run code against all configured test cases
@@ -377,16 +358,16 @@ function App() {
 
   return (
     <div className="h-screen w-full flex flex-col bg-[#1a1a1a] text-gray-200 overflow-hidden font-sans">
-      {/* Top Navbar */}
+      {/* Top Navbar with Combined Save + Dropdown */}
       <Navbar
         language={language}
         setLanguage={handleLanguageChange}
         onRun={handleRunCode}
         onReset={handleResetCode}
         onOpenSaveModal={() => setIsSaveModalOpen(true)}
-        onOpenSavedCodesModal={() => setIsSavedCodesModalOpen(true)}
-        onOpenTemplatesModal={() => setIsTemplatesModalOpen(true)}
-        savedCount={savedProblems.length}
+        savedProblems={savedProblems}
+        onLoadProblem={handleLoadProblem}
+        onDeleteProblem={handleDeleteProblem}
         isRunning={isRunning}
       />
 
@@ -433,6 +414,7 @@ function App() {
           language={language}
           getAllTemplates={getAllTemplates}
           editorInstanceRef={editorInstanceRef}
+          onOpenSnippetsModal={() => setIsSnippetsModalOpen(true)}
         />
 
         {/* Right / Bottom Pane: Console Panel */}
@@ -452,7 +434,7 @@ function App() {
         />
       </SplitPane>
 
-      {/* Save Code & Testcases Modal */}
+      {/* Save Snippet / Code Modal */}
       <SaveModal
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
@@ -462,23 +444,12 @@ function App() {
         testCases={testCases}
       />
 
-      {/* Saved Codes Library Drawer */}
-      <SavedCodesModal
-        isOpen={isSavedCodesModalOpen}
-        onClose={() => setIsSavedCodesModalOpen(false)}
-        savedProblems={savedProblems}
-        onLoadProblem={handleLoadProblem}
-        onDeleteProblem={handleDeleteProblem}
-      />
-
-      {/* Slash Command Templates Modal */}
-      <TemplatesModal
-        isOpen={isTemplatesModalOpen}
-        onClose={() => setIsTemplatesModalOpen(false)}
-        allTemplates={getAllTemplates()}
-        onInsertTemplate={handleInsertTemplate}
-        onSaveCustomTemplate={handleSaveCustomTemplate}
-        onDeleteCustomTemplate={handleDeleteCustomTemplate}
+      {/* LeetCode Style Snippet Library Modal */}
+      <SnippetLibraryModal
+        isOpen={isSnippetsModalOpen}
+        onClose={() => setIsSnippetsModalOpen(false)}
+        allSnippets={getAllTemplates()}
+        onInsertSnippet={handleInsertTemplate}
       />
     </div>
   );

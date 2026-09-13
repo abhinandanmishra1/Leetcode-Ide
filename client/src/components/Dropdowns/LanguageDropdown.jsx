@@ -19,19 +19,21 @@ const darkSelectStyles = {
   valueContainer: (base) => ({ ...base, padding: '0 8px' }),
   singleValue: (base) => ({ ...base, color: '#e0e0e0' }),
   placeholder: (base) => ({ ...base, color: '#888888' }),
+  menuPortal: (base) => ({ ...base, zIndex: 99999 }),
   menu: (base) => ({
     ...base,
-    backgroundColor: '#2d2d2d',
+    backgroundColor: '#262626',
     border: '1px solid #444444',
-    zIndex: 9999,
+    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+    zIndex: 99999,
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isSelected ? '#3e3e3e' : state.isFocused ? '#383838' : 'transparent',
-    color: '#e0e0e0',
+    backgroundColor: state.isSelected ? '#3e3e3e' : state.isFocused ? '#333333' : 'transparent',
+    color: state.isSelected ? '#ffa116' : '#e0e0e0',
     fontSize: '13px',
     cursor: 'pointer',
-    '&:active': { backgroundColor: '#4a4a4a' },
+    '&:active': { backgroundColor: '#444444' },
   }),
   dropdownIndicator: (base) => ({ ...base, padding: '4px', color: '#888888' }),
   indicatorSeparator: () => ({ display: 'none' }),
@@ -45,6 +47,8 @@ export default function LanguageDropdown({ language, setLanguage }) {
       value={language}
       styles={darkSelectStyles}
       className="text-xs"
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
       onChange={(selected) => {
         if (selected) setLanguage(selected);
       }}
