@@ -1,34 +1,33 @@
-import React,{useEffect, useState} from "react";
+import React from "react";
 import Editor from "@monaco-editor/react";
 
-import { useWindowSize } from "../../Hook/windowSize";
-import { handleEditorDidMount } from "../../utils/codeEditor.utils";
-
 const CodeEditor = ({ theme, code, setCode, language }) => {
-	const { width } = useWindowSize();
-	const [editorHeight,setEditorHeight] = useState("95vh");
+  const languageValue = typeof language === 'string' ? language : (language?.value || "javascript");
 
-	useEffect(() => {
-    if(width>768){
-			setEditorHeight("95vh");
-		}else{
-			setEditorHeight("55vh");
-		}
-  }, [width]);
-
-	return (
-		<Editor
-			height={editorHeight}
-			width={`100%`}
-			language={language}
-			value={code}
-			theme={theme}
-			className="text-3xl"
-			defaultValue="//Write your code here"
-			onMount={handleEditorDidMount}
-			onChange={(value) => setCode(value)}
-		/>
-	);
+  return (
+    <div className="flex-1 w-full h-full min-h-[400px] overflow-hidden bg-[#1e1e1e]">
+      <Editor
+        height="100%"
+        width="100%"
+        language={languageValue}
+        value={code}
+        theme={theme || "vs-dark"}
+        options={{
+          fontSize: 14,
+          fontFamily: "'Fira Code', Menlo, Monaco, 'Courier New', monospace",
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          tabSize: 4,
+          lineNumbers: "on",
+          renderLineHighlight: "all",
+          cursorBlinking: "smooth",
+          padding: { top: 12, bottom: 12 },
+        }}
+        onChange={(value) => setCode(value || "")}
+      />
+    </div>
+  );
 };
 
 export default CodeEditor;

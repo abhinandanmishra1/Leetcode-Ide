@@ -1,66 +1,74 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlayCircle } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faSpinner, faRotateLeft, faCode } from "@fortawesome/free-solid-svg-icons";
 import LanguageDropdown from "../Dropdowns/LanguageDropdown";
 import ThemeDropdown from "../Dropdowns/ThemeDropdown";
-import { checkStatus, submitCode } from "../../api";
 
 const Navbar = ({
-	language,
-	setLanguage,
-	setTheme,
-	theme,
-	setOutput,
-	setStatus,
-	testInput,
-	code
+  language,
+  setLanguage,
+  theme,
+  setTheme,
+  onRun,
+  onReset,
+  isRunning,
 }) => {
-	const handleSubmit = async () => {
-		setStatus("Running");
-		const formData={
-			language_id: language.id,
-      source_code: btoa(code),
-      stdin: btoa(testInput),
-		}
+  return (
+    <div className="bg-[#282828] border-b border-[#3e3e3e] px-4 py-2 flex flex-wrap items-center justify-between gap-3 select-none">
+      {/* Brand Title */}
+      <div className="flex items-center space-x-2 text-white font-semibold tracking-wide text-base">
+        <span className="text-[#ffa116] text-xl">
+          <FontAwesomeIcon icon={faCode} />
+        </span>
+        <span className="text-gray-200">LeetCode</span>
+        <span className="text-xs bg-[#3a3a3a] text-gray-300 font-mono px-2 py-0.5 rounded">
+          IDE
+        </span>
+      </div>
 
-    try {
-      const { data } = await submitCode(formData)
-      const { token } = data;
-      const {data: output, success, err}  = await checkStatus(token);
-      
-      if(success) {
-        setOutput(output);
-        setStatus("Finished");
-      }else{
-        console.log(err);
-        setStatus("Error");
-      }
-    }
-    catch(err){
-      let error = err.response ? err.response.data : err;
-      console.log(error);
-    }
-	};
+      {/* Center / Controls */}
+      <div className="flex items-center space-x-3">
+        <LanguageDropdown language={language} setLanguage={setLanguage} />
+        <ThemeDropdown theme={theme} setTheme={setTheme} />
 
-	return (
-		<div className="grid grid-cols-2 m-2">
-			<button
-				onClick={handleSubmit}
-				className="bg-[#5cb85c] border-[#4cae4c] border-1 text-white rounded-full w-32 text-sm md:text-base hover:border-[#398439] hover:bg-[#449d44] ">
-				<FontAwesomeIcon
-					icon={faPlayCircle}
-					className="mr-2"
-					color="white"
-					size="sm"
-				/>
-				<span>Run Code</span>
-			</button>
-			<div className="grid  grid-cols-2 gap-2">
-				<LanguageDropdown language={language} setLanguage={setLanguage}/>
-				<ThemeDropdown theme={theme} setTheme={setTheme} />
-			</div>
-		</div>
-	);
+        {/* Reset to boilerplate button */}
+        <button
+          onClick={onReset}
+          disabled={isRunning}
+          title="Reset code to default template"
+          className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-gray-300 bg-[#333333] hover:bg-[#3f3f3f] border border-[#444444] rounded transition duration-150 disabled:opacity-50"
+        >
+          <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
+          <span className="hidden sm:inline">Reset</span>
+        </button>
+      </div>
+
+      {/* Action: Run Code */}
+      <div className="flex items-center">
+        <button
+          onClick={onRun}
+          disabled={isRunning}
+          className={`flex items-center space-x-2 px-4 py-1.5 rounded text-sm font-medium text-white shadow-sm transition duration-150 ${
+            isRunning
+              ? "bg-[#258547] cursor-not-allowed opacity-80"
+              : "bg-[#2cbb5d] hover:bg-[#26a050] active:scale-95"
+          }`}
+        >
+          {isRunning ? (
+            <>
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+              <span>Running...</span>
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faPlay} className="text-xs" />
+              <span>Run Code</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Navbar;

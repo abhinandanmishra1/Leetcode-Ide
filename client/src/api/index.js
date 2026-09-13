@@ -29,7 +29,9 @@ export const checkStatus = async (token) => {
   }
 };
 
-export default {
+const apiService = {
   submitCode,
   checkStatus,
 };
+
+export default apiService;

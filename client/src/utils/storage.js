@@ -69,7 +69,7 @@ export const saveTheme = (theme) => {
   } catch (e) {}
 };
 
-export default {
+const storageService = {
   getSavedCode,
   saveCode,
   resetSavedCode,
@@ -80,3 +80,5 @@ export default {
   getSavedTheme,
   saveTheme,
 };
+
+export default storageService;
