@@ -182,9 +182,9 @@ router.get('/me', authenticateUser, async (req, res) => {
   }
 });
 
-// PUT /auth/profile - Update username and bio
+// PUT /auth/profile - Update username, name, and bio
 router.put('/profile', authenticateUser, async (req, res) => {
-  const { username, bio } = req.body;
+  const { username, name, bio } = req.body;
   const user = req.user;
 
   try {
@@ -197,12 +197,24 @@ router.put('/profile', authenticateUser, async (req, res) => {
         });
       }
 
+      const RESERVED = ['api', 'auth', 'ide', 'explore', 'login', 'signup', 'settings', 'u', 'snippets', 'null', 'undefined'];
+      if (RESERVED.includes(cleanUsername)) {
+        return res.status(400).json({
+          error: 'Validation Error',
+          message: `Username '${cleanUsername}' is reserved`,
+        });
+      }
+
       const existing = await User.findOne({ username: cleanUsername });
       if (existing && existing._id.toString() !== user._id.toString()) {
         return res.status(409).json({ error: 'Conflict', message: 'Username is already taken' });
       }
 
       user.username = cleanUsername;
+    }
+
+    if (name && typeof name === 'string' && name.trim()) {
+      user.name = name.trim().slice(0, 50);
     }
 
     if (typeof bio === 'string') {

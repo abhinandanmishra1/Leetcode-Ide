@@ -57,9 +57,10 @@ test('GET /auth/me with valid Bearer token returns user profile and stats', asyn
   assert.strictEqual(typeof data.stats.following, 'number');
 });
 
-test('PUT /auth/profile updates user bio and valid username', async () => {
+test('PUT /auth/profile updates user bio, name and valid username', async () => {
   const newUsername = `updated_${Date.now().toString().slice(-4)}`;
   const newBio = 'Building algorithms on CodePad!';
+  const newName = 'Algorithmic Master';
 
   const res = await fetch(`${baseUrl}/auth/profile`, {
     method: 'PUT',
@@ -69,6 +70,7 @@ test('PUT /auth/profile updates user bio and valid username', async () => {
     },
     body: JSON.stringify({
       username: newUsername,
+      name: newName,
       bio: newBio,
     }),
   });
@@ -76,6 +78,7 @@ test('PUT /auth/profile updates user bio and valid username', async () => {
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.strictEqual(data.username, newUsername);
+  assert.strictEqual(data.name, newName);
   assert.strictEqual(data.bio, newBio);
 });
 

@@ -13,6 +13,8 @@ import {
   faCheck,
   faArrowLeft,
   faCompass,
+  faTimes,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import AuthModal from "../components/Auth/AuthModal";
@@ -30,9 +32,13 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [newBio, setNewBio] = useState("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editError, setEditError] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -51,7 +57,6 @@ function ProfilePage() {
         setProfileData(prof);
         setIsFollowing(prof.isFollowing);
         setFollowerCount(prof.stats?.followers || 0);
-        setNewBio(prof.user?.bio || "");
         setSnippets(userSnippets || []);
       })
       .catch((err) => {
@@ -77,14 +82,64 @@ function ProfilePage() {
     }
   };
 
-  const handleSaveBio = async () => {
-    const res = await updateProfile({ bio: newBio });
-    if (res.success) {
+  const openEditModal = () => {
+    if (!profileData?.user) return;
+    setEditName(profileData.user.name || "");
+    setEditUsername(profileData.user.username || "");
+    setEditBio(profileData.user.bio || "");
+    setEditError(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setEditError(null);
+
+    const cleanUsername = editUsername.trim().toLowerCase();
+    const cleanName = editName.trim();
+
+    if (!cleanUsername) {
+      setEditError("Username cannot be empty");
+      return;
+    }
+
+    if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
+      setEditError("Username must be 3-30 characters with only lowercase letters, numbers, and underscores");
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const res = await updateProfile({
+        name: cleanName,
+        username: cleanUsername,
+        bio: editBio,
+      });
+
+      if (!res.success) {
+        setEditError(res.error || "Failed to update profile");
+        setEditLoading(false);
+        return;
+      }
+
       setProfileData((prev) => ({
         ...prev,
-        user: { ...prev.user, bio: newBio },
+        user: {
+          ...prev.user,
+          name: res.user?.name || cleanName,
+          username: res.user?.username || cleanUsername,
+          bio: res.user?.bio ?? editBio,
+        },
       }));
-      setIsEditingBio(false);
+      setIsEditModalOpen(false);
+
+      if (cleanUsername !== username.toLowerCase()) {
+        navigate(`/u/${cleanUsername}`, { replace: true });
+      }
+    } catch (err) {
+      setEditError(err.message || "Failed to update profile");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -168,44 +223,20 @@ function ProfilePage() {
                 </div>
 
                 {/* Bio */}
-                {isEditingBio ? (
-                  <div className="flex items-center space-x-2 pt-1">
-                    <input
-                      type="text"
-                      value={newBio}
-                      onChange={(e) => setNewBio(e.target.value)}
-                      placeholder="Enter a brief bio..."
-                      className="bg-[#141414] border border-[#3e3e3e] px-3 py-1 rounded text-xs text-white focus:outline-none focus:border-[#ffa116]"
-                    />
+                <p className="text-xs sm:text-sm text-gray-400 max-w-xl">
+                  {user.bio || (isSelf ? "Add a short bio to introduce yourself..." : "No bio provided.")}
+                  {isSelf && (
                     <button
                       type="button"
-                      onClick={handleSaveBio}
-                      className="px-2.5 py-1 bg-[#2cbb5d] text-white text-xs font-semibold rounded"
+                      onClick={openEditModal}
+                      title="Edit profile & username"
+                      className="ml-2 text-gray-500 hover:text-[#ffa116] transition-colors text-xs inline-flex items-center space-x-1"
                     >
-                      <FontAwesomeIcon icon={faCheck} />
+                      <FontAwesomeIcon icon={faEdit} />
+                      <span className="text-[11px] underline">Edit</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingBio(false)}
-                      className="text-xs text-gray-400 hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs sm:text-sm text-gray-400 max-w-xl">
-                    {user.bio || (isSelf ? "Add a short bio to introduce yourself..." : "No bio provided.")}
-                    {isSelf && (
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingBio(true)}
-                        className="ml-2 text-gray-500 hover:text-[#ffa116] transition-colors text-xs"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                    )}
-                  </p>
-                )}
+                  )}
+                </p>
 
                 <div className="flex items-center space-x-4 text-xs text-gray-500 pt-1">
                   <div className="flex items-center space-x-1.5">
@@ -220,7 +251,16 @@ function ProfilePage() {
 
             {/* Follow / Edit Button */}
             <div className="flex items-center space-x-3 self-end sm:self-center">
-              {!isSelf && (
+              {isSelf ? (
+                <button
+                  type="button"
+                  onClick={openEditModal}
+                  className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow active:scale-95 bg-[#262626] hover:bg-[#333333] text-gray-200 border border-[#3e3e3e] hover:border-[#ffa116]"
+                >
+                  <FontAwesomeIcon icon={faEdit} className="text-[#ffa116]" />
+                  <span>Edit Profile</span>
+                </button>
+              ) : (
                 <button
                   type="button"
                   onClick={handleToggleFollow}
@@ -329,6 +369,105 @@ function ProfilePage() {
       </main>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#1e1e1e] border border-[#333333] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-4">
+              <div className="flex items-center space-x-2">
+                <FontAwesomeIcon icon={faEdit} className="text-[#ffa116]" />
+                <h3 className="text-base font-bold text-white">Edit Profile</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-400 hover:text-white p-1 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-xl text-xs text-red-300">
+                {editError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  maxLength={50}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Alex Turing"
+                  className="w-full bg-[#141414] border border-[#3a3a3a] focus:border-[#ffa116] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                  Username
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-xs text-gray-500 font-mono">@</span>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    maxLength={30}
+                    onChange={(e) => setEditUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                    placeholder="username"
+                    className="w-full bg-[#141414] border border-[#3a3a3a] focus:border-[#ffa116] rounded-xl pl-7 pr-3 py-2 text-xs text-white font-mono placeholder-gray-500 focus:outline-none transition-colors"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  3-30 characters (lowercase letters, numbers, underscores). Your profile URL will be <span className="text-gray-400 font-mono">/u/{editUsername || "username"}</span>.
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-300">
+                    Bio
+                  </label>
+                  <span className="text-[11px] text-gray-500">{editBio.length}/250</span>
+                </div>
+                <textarea
+                  value={editBio}
+                  maxLength={250}
+                  rows={3}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  placeholder="Tell other developers about yourself, contest rankings, or favorite algorithms..."
+                  className="w-full bg-[#141414] border border-[#3a3a3a] focus:border-[#ffa116] rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  disabled={editLoading}
+                  className="px-4 py-2 bg-[#282828] hover:bg-[#333333] text-gray-300 text-xs font-semibold rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex items-center space-x-2 px-5 py-2 bg-[#ffa116] hover:bg-[#e08d0e] disabled:opacity-50 text-black text-xs font-bold rounded-xl transition-all shadow"
+                >
+                  {editLoading && <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />}
+                  <span>{editLoading ? "Saving..." : "Save Changes"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
