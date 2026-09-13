@@ -11,11 +11,19 @@ export const TestcaseTab = ({
   onUpdateCase,
 }) => {
   const activeCase = testCases.find((c) => c.id === activeCaseId) || testCases[0];
+  const hasReachedMax = testCases.length >= 8;
+  const isCurrentCaseEmpty = !activeCase?.input?.trim();
+  const canAddCase = !hasReachedMax && !isCurrentCaseEmpty;
+  const addTooltip = hasReachedMax
+    ? "Maximum 8 test cases allowed"
+    : isCurrentCaseEmpty
+    ? "Enter input in current test case before adding another"
+    : "Add another test case";
 
   return (
     <div className="flex flex-col h-full space-y-3 font-sans text-xs">
-      {/* Case Tabs Row */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 border-b border-[#2d2d2d] select-none flex-shrink-0">
+      {/* Case Tabs Row - Wraps into rows without horizontal scrollbar */}
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-[#2d2d2d] select-none flex-shrink-0">
         {testCases.map((tc, idx) => {
           const isActive = tc.id === activeCase?.id;
           return (
@@ -50,9 +58,14 @@ export const TestcaseTab = ({
         {testCases.length < 8 && (
           <button
             type="button"
-            onClick={onAddCase}
-            title="Add another test case"
-            className="flex items-center justify-center w-7 h-7 rounded-md bg-[#222222] hover:bg-[#333333] text-gray-400 hover:text-white transition-colors border border-transparent hover:border-[#444444]"
+            onClick={canAddCase ? onAddCase : undefined}
+            disabled={!canAddCase}
+            title={addTooltip}
+            className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors border ${
+              canAddCase
+                ? "bg-[#222222] hover:bg-[#333333] text-gray-300 hover:text-white border-[#3e3e3e] hover:border-[#555555] active:scale-95 cursor-pointer"
+                : "bg-[#1c1c1c] text-gray-600 border-[#2a2a2a] cursor-not-allowed opacity-50"
+            }`}
           >
             <FontAwesomeIcon icon={faPlus} className="text-xs" />
           </button>

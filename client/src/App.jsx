@@ -4,6 +4,7 @@ import ConsolePanel from "./components/Console/ConsolePanel";
 import Navbar from "./components/Navbar/Navbar";
 import SplitPane from "./components/SplitPane/SplitPane";
 import SaveModal from "./components/SavedCodes/SaveModal";
+import ResetModal from "./components/ResetModal/ResetModal";
 import SnippetLibraryModal from "./components/Templates/SnippetLibraryModal";
 import { LANGUAGES } from "./constants/languages";
 import { boilerCodes } from "./boilerCodes";
@@ -60,6 +61,7 @@ function App() {
 
   // Modals state
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isSnippetsModalOpen, setIsSnippetsModalOpen] = useState(false);
 
   // Saved collections state
@@ -120,25 +122,41 @@ function App() {
     }, 300);
   };
 
-  // Add a new testcase tab
+  // Add a new testcase tab (max 8, requires current case to have input)
   const handleAddCase = () => {
-    const nextNum = testCases.length + 1;
+    if (testCases.length >= 8) {
+      showToast("Maximum 8 test cases allowed.", "info");
+      return;
+    }
+    const currentCase = testCases.find((c) => c.id === activeCaseId) || testCases[testCases.length - 1];
+    if (currentCase && !currentCase.input?.trim()) {
+      showToast("Please enter input in the current test case first.", "info");
+      return;
+    }
+
     const newCase = {
       id: Date.now().toString(),
-      name: `Case ${nextNum}`,
+      name: `Case ${testCases.length + 1}`,
       input: "",
       expected: "",
     };
-    const updated = [...testCases, newCase];
+    const updated = [...testCases, newCase].map((c, idx) => ({
+      ...c,
+      name: `Case ${idx + 1}`,
+    }));
     setTestCases(updated);
     setActiveCaseId(newCase.id);
     saveTestCases(language.id, updated);
   };
 
-  // Remove a testcase tab
+  // Remove a testcase tab and renumber remaining sequentially (Case 1, Case 2...)
   const handleRemoveCase = (caseId) => {
     if (testCases.length <= 1) return;
-    const updated = testCases.filter((c) => c.id !== caseId);
+    const remaining = testCases.filter((c) => c.id !== caseId);
+    const updated = remaining.map((c, idx) => ({
+      ...c,
+      name: `Case ${idx + 1}`,
+    }));
     setTestCases(updated);
     if (activeCaseId === caseId) {
       setActiveCaseId(updated[0]?.id || "1");
@@ -153,15 +171,18 @@ function App() {
     saveTestCases(language.id, updated);
   };
 
-  // Reset code to boilerplate template
+  // Open reset code confirmation modal
   const handleResetCode = () => {
-    const confirmed = window.confirm("Reset code to default template? Any unsaved edits will be replaced.");
-    if (confirmed) {
-      resetSavedCode(language.id);
-      const defaultBoiler = boilerCodes(language.id);
-      setCode(defaultBoiler);
-      saveCode(language.id, defaultBoiler);
-    }
+    setIsResetModalOpen(true);
+  };
+
+  // Confirmed reset: restore boilerplate template
+  const handleConfirmReset = () => {
+    resetSavedCode(language.id);
+    const defaultBoiler = boilerCodes(language.id);
+    setCode(defaultBoiler);
+    saveCode(language.id, defaultBoiler);
+    showToast(`Reset code to default template for ${language.name}!`);
   };
 
   // Save problem/snippet (and optionally register slash command)
@@ -448,6 +469,14 @@ function App() {
         currentLanguage={language}
         code={code}
         testCases={testCases}
+      />
+
+      {/* Reset Code Confirmation Modal */}
+      <ResetModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleConfirmReset}
+        currentLanguage={language}
       />
 
       {/* LeetCode Style Snippet Library Modal */}

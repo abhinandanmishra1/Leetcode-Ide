@@ -68,8 +68,8 @@ export const TestResultTab = ({
         )}
       </div>
 
-      {/* Case Pills Header (Case 1, Case 2...) */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 flex-shrink-0 select-none">
+      {/* Case Pills Header (Case 1, Case 2...) - Wraps into rows without horizontal scrollbar */}
+      <div className="flex flex-wrap items-center gap-2 pb-2 flex-shrink-0 select-none">
         {results.map((res, idx) => {
           const isSelected = res.caseId === activeResult?.caseId;
           const passed = res.isPassed;

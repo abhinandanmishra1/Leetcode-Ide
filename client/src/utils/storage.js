@@ -6,11 +6,15 @@ const TESTCASES_PREFIX = "leetcode_ide_testcases_";
 const LAST_LANG_KEY = "leetcode_ide_last_lang";
 const SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
 const TEMPLATES_KEY = "leetcode_ide_templates";
-const TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v2";
+const TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded_v3";
 
 export const DEFAULT_TESTCASES = [
-  { id: "1", name: "Case 1", input: "", expected: "" },
-  { id: "2", name: "Case 2", input: "", expected: "" },
+  {
+    id: "1",
+    name: "Case 1",
+    input: "5\nhello\n1 2 3 4 5",
+    expected: "Number: 5\nString: hello\nArray: 1 2 3 4 5",
+  },
 ];
 
 /**
@@ -86,8 +90,12 @@ export const getSavedTestCases = (languageId) => {
     }
     const legacyStdin = getSavedStdin(languageId);
     return [
-      { id: "1", name: "Case 1", input: legacyStdin || "", expected: "" },
-      { id: "2", name: "Case 2", input: "", expected: "" },
+      {
+        id: "1",
+        name: "Case 1",
+        input: legacyStdin || "5\nhello\n1 2 3 4 5",
+        expected: "Number: 5\nString: hello\nArray: 1 2 3 4 5",
+      },
     ];
   } catch {
     return DEFAULT_TESTCASES;

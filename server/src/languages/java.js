@@ -35,11 +35,23 @@ export default {
       '// package stripped for sandbox execution;'
     );
 
+    // Auto-include standard competitive programming / LeetCode packages if missing
+    let prefix = '';
+    if (!/import\s+java\.util\s*\.\s*\*/.test(sanitizedCode)) {
+      prefix += 'import java.util.*;\n';
+    }
+    if (!/import\s+java\.io\s*\.\s*\*/.test(sanitizedCode)) {
+      prefix += 'import java.io.*;\n';
+    }
+    if (!/import\s+java\.math\s*\.\s*\*/.test(sanitizedCode)) {
+      prefix += 'import java.math.*;\n';
+    }
+
     return {
       source_file: `${className}.java`,
       compile_cmd: `javac ${className}.java`,
       run_cmd: `java -Xmx256m ${className}`,
-      source_code: sanitizedCode,
+      source_code: prefix + sanitizedCode,
     };
   },
 };

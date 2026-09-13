@@ -15,4 +15,17 @@ export default {
   run_cmd: './Solution',
   default_cpu_limit: 2.0,
   default_memory_limit: 262144, // 256MB in KB
+  resolve(sourceCode) {
+    let code = sourceCode || '';
+    let prefix = '';
+    if (!/#include\s*<bits\/stdc\+\+\.h>/.test(code)) {
+      prefix += '#include <bits/stdc++.h>\n';
+    }
+    if (!/using\s+namespace\s+std\s*;/.test(code)) {
+      prefix += 'using namespace std;\n';
+    }
+    return {
+      source_code: prefix + code,
+    };
+  },
 };
