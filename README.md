@@ -112,28 +112,86 @@ sequenceDiagram
 
 ---
 
-## Key Highlights & Features
+## Comprehensive Features & Capabilities
 
-- **100% In-House Sandboxed Execution**: Replaced third-party Judge0 APIs with a dedicated, self-hosted Node.js execution engine (`server/`), eliminating third-party rate limits and API costs.
-- **Budget-Optimized for Railway**: Runs efficiently within ~512MB RAM and 0.5 vCPU on an Ubuntu 22.04 LTS container, fully covered by free tier usage credits.
-- **20-Category Pre-Execution Security Auditor**:
-  - Scans submitted code *before* compilation or process creation.
-  - Automatically de-obfuscates Base64 strings, hex/unicode escapes, and string concatenations.
-  - Prevents filesystem destruction, command injection, reverse shells, memory exhaustion, container escape, dynamic `eval()`, network socket creation, raw device access, and unauthorized system file access (`/etc/passwd`, etc.).
-- **Zero-Copy Synchronous Input Tokenizer (`Scanner`)**:
-  - Built-in `Scanner` class for JavaScript and TypeScript (`sc.nextInt()`, `sc.next()`, `sc.nextArray()`, `sc.nextFloat()`, `sc.nextBigInt()`).
-  - Strict input validation that throws descriptive Runtime Errors when code expects input that stdin does not provide, or receives invalid token types (e.g. `2h8`).
-  - Standard competitive programming syntax preserved for C++ (`cin`), Java (`Scanner`), Python (`sys.stdin`), and C (`scanf`).
-- **Monaco Code Editor & LeetCode UI**:
-  - Authentic dark theme (`#1a1a1a` background, `#282828` navbar, `#2cbb5d` accents).
-  - Multi-tab console with **Testcase (custom stdin)** and **Test Result** panels.
-  - Telemetry badges displaying exact **Runtime (ms)** and **Memory (MB)**.
-  - LocalStorage auto-save per language with template reset protection.
-  - Slash command template library (`/`) and customizable starter templates.
-- **Production Resilience**:
-  - Ephemeral scratchpad isolation (`/tmp/codebox/:token`) with guaranteed cleanup in `finally` blocks.
-  - Path sanitization in stack traces (no internal `/private/var/folders` or `/tmp` leaks).
-  - Dynamic CORS handler with automatic trailing slash normalization and multi-origin matching.
+### ⚡ 1. In-House Sandboxed Execution Engine
+- **Independent Execution Backend**: Fully custom-built Node.js microservice (`server/`) replacing third-party dependencies (Judge0, RapidAPI). Zero API rate limits, zero third-party subscriptions.
+- **Ephemeral Scratchpad Isolation**: Each submission is executed inside an isolated, unique temporary directory (`/tmp/codebox/:token`). Ephemeral directories are strictly wiped in `finally` blocks upon completion or failure.
+- **Strict Process & Resource Limits**:
+  - Wall-clock CPU timeouts (default 5.0 seconds) terminated with `SIGKILL`.
+  - Process memory ceilings (256 MB) to prevent out-of-memory crashes.
+  - Standard input stream timeouts to prevent hung processes on blocking reads.
+- **Host Path Sanitization**: Internal execution paths (e.g. `/private/var/folders/...`, `/tmp/codebox/...`) are automatically stripped from compiler output and runtime stack traces, presenting clean relative diagnostics like `Solution.js:42` or `Solution.cpp:12`.
+
+---
+
+### 🛡️ 2. 20-Category Pre-Execution Security Auditor
+Submissions undergo deep static security analysis **prior to process creation or compilation**. The engine prevents sandbox escapes, system tampering, and Denial of Service across **20 threat categories**:
+
+1. **Filesystem Destruction**: Blocks recursive deletes, file truncation, disk overwrites (`rm -rf`, `fs.rmdirSync`, `shutil.rmtree`).
+2. **Arbitrary Command Execution**: Detects process spawning (`system()`, `popen()`, `exec*`, `spawn`, `subprocess`, `ProcessBuilder`, `Runtime`).
+3. **Shell Interpreters**: Prevents direct invocations of `/bin/sh`, `/bin/bash`, `cmd.exe`, `powershell`.
+4. **Command Injection**: Detects dynamic shell chaining, backticks, subshells, and command interpolation.
+5. **Filesystem Traversal**: Prevents relative directory escapes (`../`) and unauthorized symlink attacks.
+6. **Sensitive File Protection**: Blocks access to `/etc/passwd`, `/etc/shadow`, `/proc/self`, SSH keys, and system hives.
+7. **Secret & Credential Exfiltration**: Blocks inspection of system environment variables (`process.env`, `os.environ`, `System.getenv`).
+8. **Network Socket & HTTP APIs**: Rejects socket creation, TCP/UDP binds, outbound HTTP clients (`curl`, `fetch`, `urllib`, `requests`).
+9. **Reverse Shells**: Detects bash socket redirection, netcat listeners, Python interactive PTY shells.
+10. **Privilege Escalation**: Prevents UID/GID manipulation, `sudo`, `doas`, `setuid` invocations.
+11. **Container Escape & Namespaces**: Detects namespace tampering (`/proc/1/ns`), cgroup probing, Docker socket access.
+12. **Process Inspection & Signaling**: Blocks `ptrace`, process signaling (`SIGKILL`, `kill()`), memory poking.
+13. **Resource Exhaustion & Fork Bombs**: Detects fork bombs (`:(){ :|:& };:`), unbounded thread generation, memory bombs.
+14. **Dynamic Code Evaluation**: Blocks arbitrary string evaluation (`eval()`, `new Function()`, `compile()`, Python `exec()`).
+15. **Obfuscated Payload Execution**: Unrolls Base64 strings, decodes hex/unicode escapes (`\x65\x76\x61\x6c`), and resolves concatenated string tokens before scanning.
+16. **Native Code Loading**: Prevents dynamic native binary linking (`dlopen`, `ctypes`, JNI native methods).
+17. **Raw Device Access**: Blocks raw disk and memory device access (`/dev/kmem`, `/dev/mem`, `/dev/sda`).
+18. **Direct Syscalls & Assembly**: Rejects direct syscall invocations (`syscall()`, `ioctl()`, inline assembly).
+19. **Infinite Output Storms**: Detects unbounded, high-frequency print loops that exhaust stream buffers.
+20. **Sandbox Boundary Escapes**: Rejects `chroot`, root namespace unsharing, and root filesystem remounts.
+
+---
+
+### 📥 3. High-Performance Synchronous Input Parsing (`Scanner`)
+- **Zero-Copy Competitive Programming I/O**: Custom, lightweight pointer-based `Scanner` class tailored for JavaScript and TypeScript:
+  - `sc.nextInt()`: Reads and parses signed integers with pointer-level ASCII validation.
+  - `sc.next()`: Reads the next whitespace-delimited string token.
+  - `sc.nextArray(n)`: Allocates and populates an array of $n$ elements in $O(n)$ time.
+  - `sc.nextFloat()`: Parses floating-point numbers with strict `NaN` rejection.
+  - `sc.nextBigInt()`: Parses arbitrary-precision integers safely.
+  - `sc.hasNext()`: Lookahead boolean check for remaining input tokens.
+- **Strict Error Detection**:
+  - **Unexpected EOF**: Throws `Runtime Error: Unexpected end of stdin` when code requests more input than testcases provide.
+  - **Type Mismatches**: Throws `Runtime Error: Expected integer input on stdin, received "..."` when encountering alphanumeric noise (e.g. `2h8`).
+- **Idiomatic Native Inputs**: Standard competitive programming syntax preserved for all other languages (`cin >>` in C++, `Scanner` in Java, `sys.stdin.read().split()` in Python, and `scanf` in C).
+
+---
+
+### 💻 4. Monaco Code Editor & LeetCode Dark UI
+- **Authentic LeetCode Aesthetics**: Tailored dark theme canvas (`#1a1a1a`), contrast toolbars (`#282828`), and LeetCode green action buttons (`#2cbb5d`).
+- **Rich Code Editor Capabilities**:
+  - Monaco-powered intelligent syntax highlighting and bracket pair colorization.
+  - Language-specific ambient type definitions (Node.js `@types/node` and standard libraries pre-loaded for lint-free editing).
+  - Fixed overflow widgets and smooth scrolling.
+- **Interactive Multi-Tab Console**:
+  - **Testcase Tab**: Multiline custom stdin input editor for user-defined testcases.
+  - **Test Result Tab**: Real-time telemetry badges for execution status (Accepted, Wrong Answer, Time Limit Exceeded, Runtime Error, Compilation Error).
+  - High-precision telemetry metrics: exact execution time (in milliseconds) and peak heap memory (in MB).
+
+---
+
+### 💾 5. Persistence, Templates & Slash Commands
+- **Per-Language LocalStorage Auto-Save**: Code and custom stdin testcases are automatically persisted to LocalStorage on every keystroke. Refreshing or switching tabs never loses work.
+- **Slash Commands (`/`) & Snippet Library**: Type `/` inside the editor or click the template drawer to load pre-built competitive programming templates (Binary Search, BFS/DFS, Disjoint Set Union, Segment Tree, Dijkstra, Dynamic Programming).
+- **Template Management**: Create, edit, persist, and overwrite custom user snippets with safe overwrite-confirmation dialogs and quick-reset capabilities.
+
+---
+
+### 🚦 6. Dual-Engine Queue & Resilient Infrastructure
+- **Distributed BullMQ with Redis**: Production-grade async job queue with concurrency management, worker isolation, and Redis result caching (1-hour TTL).
+- **Zero-Config In-Memory Fallback**: Omitting `REDIS_URL` in local environments automatically activates an in-memory queue—allowing developers to run the entire backend with zero dependencies.
+- **Intelligent CORS Engine**: Automatically normalizes origin URLs, strips accidental trailing slashes, and supports multi-origin matching across production and preview deployments.
+- **Rate Limiting**: Integrated IP rate limiter (30 requests/minute/IP) with remaining-request headers and countdown warnings.
+- **Railway Hobby-Plan Optimization**: Tuned to run comfortably under ~512MB RAM and 0.5 vCPU (~$2.50/month), fully covered by Railway's included credits.
 
 ---
 
