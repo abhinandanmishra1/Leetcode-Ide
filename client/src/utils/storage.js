@@ -23,7 +23,7 @@ export const LEGACY_SAVED_PROBLEMS_KEY = "leetcode_ide_saved_problems";
 export const TEMPLATES_KEY = "codepad_templates";
 export const LEGACY_TEMPLATES_KEY = "leetcode_ide_templates";
 
-export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded";
+export const TEMPLATES_SEEDED_KEY = "codepad_templates_seeded_v3";
 export const LEGACY_TEMPLATES_SEEDED_KEY = "leetcode_ide_templates_seeded";
 
 export const DEFAULT_TESTCASES = [
@@ -305,14 +305,20 @@ export const deleteProblem = (id) => {
  */
 export const getTemplates = (languageId) => {
   try {
-    const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY, LEGACY_TEMPLATES_SEEDED_KEY);
+    const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY);
     let list = [];
     if (!isSeeded) {
       const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
       const existing = raw ? JSON.parse(raw) : [];
-      // Keep any user-created custom templates
+      // Keep any user-created custom templates, purge legacy default seeds
       const userCustom = existing.filter(
-        (t) => !t.id?.startsWith("boilerplate_") && !t.id?.startsWith("binarysearch_")
+        (t) =>
+          !t.id?.startsWith("boilerplate_") &&
+          !t.id?.startsWith("binarysearch_") &&
+          !t.id?.startsWith("segtree_") &&
+          !t.id?.startsWith("dsu_") &&
+          !t.id?.startsWith("bitmask_dp_") &&
+          !t.command?.toLowerCase().includes("fib")
       );
       list = [...INITIAL_SEEDED_TEMPLATES, ...userCustom];
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));

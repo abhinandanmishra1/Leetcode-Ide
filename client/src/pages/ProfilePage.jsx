@@ -37,6 +37,11 @@ function ProfilePage() {
   useEffect(() => {
     if (!username) return;
 
+    if (username.toLowerCase() === "author") {
+      navigate("/u/admin", { replace: true });
+      return;
+    }
+
     setLoading(true);
     Promise.all([
       usersApi.getProfile(username),

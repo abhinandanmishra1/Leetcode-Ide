@@ -41,7 +41,10 @@ router.get('/search', async (req, res) => {
 
 // GET /users/:username - Fetch user public profile and stats
 router.get('/:username', optionalAuth, async (req, res) => {
-  const username = req.params.username.toLowerCase().trim();
+  let username = req.params.username.toLowerCase().trim();
+  if (username === 'author') {
+    username = 'admin';
+  }
 
   try {
     const user = await User.findOne({ username });
@@ -81,7 +84,10 @@ router.get('/:username', optionalAuth, async (req, res) => {
 
 // GET /users/:username/snippets - Fetch public snippets authored by user
 router.get('/:username/snippets', async (req, res) => {
-  const username = req.params.username.toLowerCase().trim();
+  let username = req.params.username.toLowerCase().trim();
+  if (username === 'author') {
+    username = 'admin';
+  }
 
   try {
     const user = await User.findOne({ username });
