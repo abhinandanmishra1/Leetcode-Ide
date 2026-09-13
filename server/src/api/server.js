@@ -1,0 +1,50 @@
+import express from 'express';
+import cors from 'cors';
+import config from '../utils/config.js';
+import logger from '../utils/logger.js';
+import submissionsRouter from './routes/submissions.js';
+import languagesRouter from './routes/languages.js';
+import healthRouter from './routes/health.js';
+import { initializeQueue, closeQueue } from '../queue/producer.js';
+import { startWorker, stopWorker } from '../queue/worker.js';
+
+let serverInstance = null;
+
+export async function startServer(port = config.port) {
+  await initializeQueue();
+  await startWorker();
+
+  const app = express();
+  app.use(cors({ origin: config.clientUrl }));
+  app.use(express.json({ limit: '10mb' }));
+
+  app.use('/health', healthRouter);
+  app.use('/languages', languagesRouter);
+  app.use('/submissions', submissionsRouter);
+
+  // Global error handler
+  app.use((err, req, res, next) => {
+    logger.error({ err: err.message }, 'Unhandled error');
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  });
+
+  return new Promise((resolve) => {
+    serverInstance = app.listen(port, () => {
+      logger.info(`Server running on port ${port}`);
+      resolve(serverInstance);
+    });
+  });
+}
+
+export async function stopServer() {
+  if (serverInstance) {
+    await new Promise((resolve) => serverInstance.close(resolve));
+  }
+  await stopWorker();
+  await closeQueue();
+}
+
+export default {
+  startServer,
+  stopServer,
+};
