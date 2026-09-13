@@ -3,6 +3,7 @@ import config from '../utils/config.js';
 import logger from '../utils/logger.js';
 
 let isConnected = false;
+let memoryServer = null;
 
 export async function connectDB(uri = config.mongoUri) {
   if (isConnected || mongoose.connection.readyState === 1) {
@@ -17,7 +18,7 @@ export async function connectDB(uri = config.mongoUri) {
 
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 2000,
       autoIndex: true,
     });
     isConnected = true;
@@ -25,8 +26,22 @@ export async function connectDB(uri = config.mongoUri) {
     return conn.connection;
   } catch (error) {
     isConnected = false;
-    logger.error({ err: error.message }, 'MongoDB connection error');
-    // In dev or testing, do not crash the entire process if MongoDB is not running locally
+    logger.warn({ err: error.message }, 'Standard MongoDB connection failed, checking in-memory fallback...');
+
+    if (config.nodeEnv !== 'production' && !process.env.MONGODB_URI) {
+      try {
+        const { MongoMemoryServer } = await import('mongodb-memory-server');
+        memoryServer = await MongoMemoryServer.create();
+        const memUri = memoryServer.getUri();
+        const conn = await mongoose.connect(memUri);
+        isConnected = true;
+        logger.info(`In-memory MongoDB Connected for development at ${memUri}`);
+        return conn.connection;
+      } catch (memErr) {
+        logger.warn({ err: memErr.message }, 'Failed to start in-memory MongoDB');
+      }
+    }
+
     if (config.nodeEnv === 'production') {
       throw error;
     }
@@ -39,6 +54,10 @@ export async function disconnectDB() {
     await mongoose.disconnect();
     isConnected = false;
     logger.info('MongoDB disconnected');
+  }
+  if (memoryServer) {
+    await memoryServer.stop();
+    memoryServer = null;
   }
 }
 
