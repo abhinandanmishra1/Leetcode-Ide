@@ -6,7 +6,6 @@ import {
   faCalendar,
   faCode,
   faUsers,
-  faEye,
   faCodeFork,
   faUserPlus,
   faUserCheck,
@@ -17,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import AuthModal from "../components/Auth/AuthModal";
+import UserAvatar from "../components/common/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 import { usersApi } from "../api";
 
@@ -147,19 +147,14 @@ function ProfilePage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-10 space-y-8">
         <div className="bg-[#1c1c1c] border border-[#2e2e2e] rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            {/* User Info */}
             <div className="flex items-start sm:items-center space-x-5">
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#ffa116]/80 shadow-lg flex-shrink-0"
-                />
-              ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#2a2a2a] border-2 border-[#ffa116]/80 flex items-center justify-center text-3xl font-bold text-gray-300 flex-shrink-0">
-                  {user.name ? user.name[0].toUpperCase() : "U"}
-                </div>
-              )}
+              <UserAvatar
+                avatar={user.avatar}
+                name={user.name}
+                username={user.username}
+                size="xl"
+                className="border-2 border-[#ffa116]/80 shadow-lg"
+              />
 
               <div className="space-y-1.5">
                 <div className="flex items-center space-x-2 flex-wrap">
@@ -312,11 +307,7 @@ function ProfilePage() {
 
                   <div className="flex items-center justify-between pt-3 border-t border-[#262626] text-[11px] text-gray-500">
                     <div className="flex items-center space-x-3">
-                      <span className="flex items-center space-x-1">
-                        <FontAwesomeIcon icon={faEye} className="text-[9px]" />
-                        <span>{s.viewsCount || 0}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
+                      <span className="flex items-center space-x-1" title={`${s.forksCount || 0} forks`}>
                         <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
                         <span>{s.forksCount || 0}</span>
                       </span>

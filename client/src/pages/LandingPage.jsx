@@ -15,10 +15,12 @@ import {
   faSpinner,
   faHeart,
   faCodeBranch,
+  faCodeFork,
 } from "@fortawesome/free-solid-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import AuthModal from "../components/Auth/AuthModal";
+import UserAvatar from "../components/common/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 import { snippetsApi } from "../api";
 
@@ -201,11 +203,12 @@ vector<int> twoSum(vector<int>& nums, int target) {
                   to={`/u/${user.username}`}
                   className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-white bg-[#282828] hover:bg-[#333333] border border-[#3e3e3e] rounded-lg transition-colors"
                 >
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <span className="font-bold text-[#ffa116]">@{user.username}</span>
-                  )}
+                  <UserAvatar
+                    avatar={user.avatar}
+                    name={user.name}
+                    username={user.username}
+                    size="xs"
+                  />
                   <span className="hidden sm:inline">@{user.username}</span>
                 </Link>
                 <Link
@@ -435,7 +438,10 @@ vector<int> twoSum(vector<int>& nums, int target) {
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1c2c22] text-[#2cbb5d] border border-[#2cbb5d]/30">
                       {s.languageName}
                     </span>
-                    <span className="text-[11px] text-gray-500">{s.viewsCount || 0} views</span>
+                    <span className="flex items-center space-x-1 text-[11px] text-gray-400" title={`${s.forksCount || 0} forks`}>
+                      <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
+                      <span>{s.forksCount || 0}</span>
+                    </span>
                   </div>
                   <h3 className="text-sm font-bold text-white line-clamp-1">{s.title}</h3>
                   <p className="text-xs text-gray-400 mt-1 line-clamp-2">{s.description || "Community solution"}</p>
@@ -443,11 +449,12 @@ vector<int> twoSum(vector<int>& nums, int target) {
 
                 <div className="flex items-center justify-between pt-3 border-t border-[#282828] text-xs">
                   <div className="flex items-center space-x-2 text-gray-400">
-                    {s.author?.avatar ? (
-                      <img src={s.author.avatar} alt={s.author.name} className="w-5 h-5 rounded-full" />
-                    ) : (
-                      <span className="w-5 h-5 rounded-full bg-gray-700 inline-block" />
-                    )}
+                    <UserAvatar
+                      avatar={s.author?.avatar}
+                      name={s.author?.name}
+                      username={s.author?.username}
+                      size="xs"
+                    />
                     <span className="text-[11px]">@{s.author?.username || "anonymous"}</span>
                   </div>
                   <span className="text-[#ffa116] text-xs font-semibold">Open & Run →</span>

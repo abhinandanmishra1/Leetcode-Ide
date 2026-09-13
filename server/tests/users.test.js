@@ -13,11 +13,13 @@ before(async () => {
   const port = app.address().port;
   baseUrl = `http://localhost:${port}`;
 
+  const runId = Date.now();
+
   // Log in user A
   const resA = await fetch(`${baseUrl}/auth/dev-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'usera@codepad.local', name: 'Alice Algorithm' }),
+    body: JSON.stringify({ email: `usera-${runId}@codepad.local`, name: 'Alice Algorithm' }),
   });
   const dataA = await resA.json();
   userA = dataA.user;
@@ -27,7 +29,7 @@ before(async () => {
   const resB = await fetch(`${baseUrl}/auth/dev-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'userb@codepad.local', name: 'Bob Binary' }),
+    body: JSON.stringify({ email: `userb-${runId}@codepad.local`, name: 'Bob Binary' }),
   });
   const dataB = await resB.json();
   userB = dataB.user;

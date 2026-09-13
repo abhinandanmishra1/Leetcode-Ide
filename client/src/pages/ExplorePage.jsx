@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
   faCompass,
-  faEye,
   faCodeFork,
   faFire,
   faClock,
@@ -15,6 +14,7 @@ import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import { snippetsApi } from "../api";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../components/Auth/AuthModal";
+import UserAvatar from "../components/common/UserAvatar";
 
 const LANGUAGE_FILTERS = [
   { label: "All Languages", id: null },
@@ -232,13 +232,12 @@ function ExplorePage() {
                       }}
                       className="flex items-center space-x-1.5 text-gray-400 hover:text-white"
                     >
-                      {s.author.avatar ? (
-                        <img src={s.author.avatar} alt={s.author.name} className="w-5 h-5 rounded-full" />
-                      ) : (
-                        <span className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px]">
-                          {s.author.name ? s.author.name[0] : "U"}
-                        </span>
-                      )}
+                      <UserAvatar
+                        avatar={s.author.avatar}
+                        name={s.author.name}
+                        username={s.author.username}
+                        size="xs"
+                      />
                       <span className="text-[11px] font-medium">@{s.author.username}</span>
                     </div>
                   ) : (
@@ -246,11 +245,7 @@ function ExplorePage() {
                   )}
 
                   <div className="flex items-center space-x-3 text-gray-500 text-[11px]">
-                    <span className="flex items-center space-x-1">
-                      <FontAwesomeIcon icon={faEye} className="text-[9px]" />
-                      <span>{s.viewsCount || 0}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
+                    <span className="flex items-center space-x-1" title={`${s.forksCount || 0} forks`}>
                       <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
                       <span>{s.forksCount || 0}</span>
                     </span>

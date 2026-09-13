@@ -1,13 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCodeFork,
-  faEye,
-  faLock,
-  faUser,
-  faPlay,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCodeFork, faLock } from "@fortawesome/free-solid-svg-icons";
+import UserAvatar from "../common/UserAvatar";
 
 const SharedBanner = ({ snippet, onFork, isForking }) => {
   if (!snippet) return null;
@@ -18,17 +13,27 @@ const SharedBanner = ({ snippet, onFork, isForking }) => {
     <div className="bg-[#242424] border-b border-[#383838] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs select-none">
       {/* Left: Author Info & Snippet Details */}
       <div className="flex items-center space-x-3 min-w-0">
-        <div className="flex items-center space-x-2">
-          {author?.avatar ? (
-            <img
-              src={author.avatar}
-              alt={author.name}
-              className="w-7 h-7 rounded-full border border-gray-600 object-cover"
-            />
+        <div className="flex items-center space-x-2.5">
+          {author?.username ? (
+            <Link
+              to={`/u/${author.username}`}
+              className="hover:opacity-80 transition-opacity flex-shrink-0"
+              title={`View @${author.username}'s profile`}
+            >
+              <UserAvatar
+                avatar={author?.avatar}
+                name={author?.name}
+                username={author?.username}
+                size="md"
+              />
+            </Link>
           ) : (
-            <div className="w-7 h-7 rounded-full bg-[#383838] flex items-center justify-center text-gray-300 font-bold border border-gray-600">
-              <FontAwesomeIcon icon={faUser} className="text-[10px]" />
-            </div>
+            <UserAvatar
+              avatar={author?.avatar}
+              name={author?.name}
+              username={author?.username}
+              size="md"
+            />
           )}
 
           <div className="min-w-0">
@@ -53,14 +58,9 @@ const SharedBanner = ({ snippet, onFork, isForking }) => {
                 <span className="text-gray-300">Anonymous Coder</span>
               )}
               <span>•</span>
-              <span className="flex items-center space-x-1 text-gray-400">
-                <FontAwesomeIcon icon={faEye} className="text-[9px]" />
-                <span>{snippet.viewsCount || 0} views</span>
-              </span>
-              <span>•</span>
-              <span className="flex items-center space-x-1 text-gray-400">
+              <span className="flex items-center space-x-1 text-gray-400" title={`${snippet.forksCount || 0} forks`}>
                 <FontAwesomeIcon icon={faCodeFork} className="text-[9px]" />
-                <span>{snippet.forksCount || 0} forks</span>
+                <span>{snippet.forksCount || 0} {snippet.forksCount === 1 ? "fork" : "forks"}</span>
               </span>
             </div>
           </div>

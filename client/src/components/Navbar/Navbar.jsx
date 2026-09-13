@@ -20,6 +20,7 @@ import {
 import LanguageDropdown from "../Dropdowns/LanguageDropdown";
 import { CodePadBrand } from "../Brand/CodePadLogo";
 import { useAuth } from "../../context/AuthContext";
+import UserAvatar from "../common/UserAvatar";
 
 const Navbar = ({
   language,
@@ -274,17 +275,12 @@ const Navbar = ({
               onClick={() => setUserMenuOpen((prev) => !prev)}
               className="flex items-center space-x-1.5 p-1 rounded-full hover:ring-2 hover:ring-[#ffa116] transition-all"
             >
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-7 h-7 rounded-full object-cover border border-[#4a4a4a]"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-[#383838] flex items-center justify-center text-gray-300 font-bold text-xs border border-[#4a4a4a]">
-                  {user.name ? user.name[0].toUpperCase() : "U"}
-                </div>
-              )}
+              <UserAvatar
+                avatar={user.avatar}
+                name={user.name}
+                username={user.username}
+                size="md"
+              />
             </button>
 
             {userMenuOpen && (

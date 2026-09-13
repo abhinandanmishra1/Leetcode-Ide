@@ -5,22 +5,30 @@ import {
   faCopy,
   faCheck,
   faShareNodes,
-  faCode,
+  faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faTwitter,
   faWhatsapp,
   faLinkedin,
+  faTelegram,
+  faReddit,
 } from "@fortawesome/free-brands-svg-icons";
 
-const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", languageName = "Code" }) => {
+const ShareModal = ({
+  isOpen,
+  onClose,
+  snippetId,
+  title = "CodePad Snippet",
+  languageName = "Code",
+}) => {
   const [copied, setCopied] = useState(false);
-  const [embedCopied, setEmbedCopied] = useState(false);
+  const [messageCopied, setMessageCopied] = useState(false);
 
   if (!isOpen || !snippetId) return null;
 
   const shareUrl = `${window.location.origin}/s/${snippetId}`;
-  const embedCode = `<iframe src="${shareUrl}" width="100%" height="500" frameborder="0" allow="clipboard-write"></iframe>`;
+  const shareMessage = `🚀 Check out my solution for "${title}" (${languageName}) on CodePad!\n\n💻 Run and inspect it live in the browser:\n${shareUrl}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -28,21 +36,35 @@ const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", lan
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleCopyEmbed = () => {
-    navigator.clipboard.writeText(embedCode);
-    setEmbedCopied(true);
-    setTimeout(() => setEmbedCopied(false), 2500);
+  const handleCopyMessage = () => {
+    navigator.clipboard.writeText(shareMessage);
+    setMessageCopied(true);
+    setTimeout(() => setMessageCopied(false), 2500);
   };
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `Check out "${title}" in ${languageName} on CodePad!`
+    `Check out my solution for "${title}" (${languageName}) on CodePad! 💻 Run and test it live:`
   )}&url=${encodeURIComponent(shareUrl)}`;
 
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-    `Check out "${title}" (${languageName}) on CodePad: ${shareUrl}`
+    shareMessage
   )}`;
 
-  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+    shareUrl
+  )}`;
+
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(
+    shareUrl
+  )}&text=${encodeURIComponent(
+    `🚀 Check out my solution for "${title}" (${languageName}) on CodePad! Run and inspect it live:`
+  )}`;
+
+  const redditUrl = `https://reddit.com/submit?url=${encodeURIComponent(
+    shareUrl
+  )}&title=${encodeURIComponent(
+    `Check out my solution for "${title}" (${languageName}) on CodePad`
+  )}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -79,7 +101,7 @@ const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", lan
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all ${
+                className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                   copied
                     ? "bg-[#2cbb5d] text-white"
                     : "bg-[#ffa116] hover:bg-[#e08d0e] text-black"
@@ -99,7 +121,7 @@ const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", lan
             <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
               Share On Social
             </label>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <a
                 href={twitterUrl}
                 target="_blank"
@@ -119,6 +141,15 @@ const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", lan
                 <span>WhatsApp</span>
               </a>
               <a
+                href={telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center space-x-2 py-2 px-3 bg-[#262626] hover:bg-[#333333] border border-[#3e3e3e] rounded-lg text-xs text-gray-200 hover:text-white transition-colors"
+              >
+                <FontAwesomeIcon icon={faTelegram} className="text-[#229ed9]" />
+                <span>Telegram</span>
+              </a>
+              <a
                 href={linkedinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -130,27 +161,31 @@ const ShareModal = ({ isOpen, onClose, snippetId, title = "CodePad Snippet", lan
             </div>
           </div>
 
-          {/* Embed Code */}
+          {/* Formatted Share Message for Chats & Communities */}
           <div className="border-t border-[#2d2d2d] pt-4">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center space-x-1.5">
-                <FontAwesomeIcon icon={faCode} className="text-gray-400" />
-                <span>Embed On Your Site</span>
+                <FontAwesomeIcon icon={faMessage} className="text-[#ffa116]" />
+                <span>Share Message</span>
               </label>
               <button
                 type="button"
-                onClick={handleCopyEmbed}
-                className="text-[11px] text-[#ffa116] hover:underline"
+                onClick={handleCopyMessage}
+                className="text-xs text-[#ffa116] hover:underline font-semibold flex items-center space-x-1"
               >
-                {embedCopied ? "Copied Embed Tag!" : "Copy Embed"}
+                <FontAwesomeIcon icon={messageCopied ? faCheck : faCopy} className="text-[11px]" />
+                <span>{messageCopied ? "Copied Message!" : "Copy Message"}</span>
               </button>
             </div>
             <textarea
               readOnly
-              rows={2}
-              value={embedCode}
-              className="w-full bg-[#141414] border border-[#383838] rounded-lg p-2 text-[11px] font-mono text-gray-400 focus:outline-none resize-none"
+              rows={3}
+              value={shareMessage}
+              className="w-full bg-[#141414] border border-[#383838] rounded-lg p-2.5 text-xs font-sans text-gray-300 focus:outline-none resize-none leading-relaxed"
             />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Formatted message with direct link and call-to-action ready to paste into Discord, Slack, Telegram, or group chats.
+            </p>
           </div>
         </div>
       </div>
