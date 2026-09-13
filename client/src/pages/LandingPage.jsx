@@ -8,18 +8,22 @@ import {
   faCloud,
   faShareNodes,
   faUsers,
-  faCheckCircle,
   faArrowRight,
-  faCode,
   faCompass,
   faStar,
   faTerminal,
   faSpinner,
+  faHeart,
+  faCodeBranch,
 } from "@fortawesome/free-solid-svg-icons";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import AuthModal from "../components/Auth/AuthModal";
 import { useAuth } from "../context/AuthContext";
 import { snippetsApi } from "../api";
+
+const GITHUB_REPO_URL = "https://github.com/abhinandanmishra1/Leetcode-Ide";
+const GITHUB_API_URL = "https://api.github.com/repos/abhinandanmishra1/Leetcode-Ide";
 
 const FEATURE_CARDS = [
   {
@@ -39,9 +43,9 @@ const FEATURE_CARDS = [
   {
     icon: faCloud,
     iconColor: "text-[#00b4d8]",
-    title: "MongoDB Cloud Persistence",
+    title: "Persistent Codes",
     description:
-      "Save your algorithms, test suites, and notes permanently on the cloud. Access your portfolio anywhere.",
+      "Save your algorithms, test suites, and notes permanently on the cloud. Access your portfolio anywhere with unique URLs.",
   },
   {
     icon: faShareNodes,
@@ -66,15 +70,6 @@ const FEATURE_CARDS = [
   },
 ];
 
-const POPULAR_LANGUAGES = [
-  { id: 54, name: "C++ (GCC 11+)", tag: "cpp", badge: "Fastest" },
-  { id: 71, name: "Python 3.10+", tag: "python", badge: "Popular" },
-  { id: 62, name: "Java (OpenJDK 17)", tag: "java", badge: "Enterprise" },
-  { id: 63, name: "JavaScript (Node.js)", tag: "javascript", badge: "Full-Stack" },
-  { id: 60, name: "Go (1.20+)", tag: "go", badge: "High-Perf" },
-  { id: 73, name: "Rust (1.70+)", tag: "rust", badge: "Memory-Safe" },
-];
-
 function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -83,6 +78,19 @@ function LandingPage() {
   const [demoCodeLang, setDemoCodeLang] = useState("cpp");
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoOutput, setDemoOutput] = useState("Click 'Run Demo' to execute in sandbox...");
+  const [githubStars, setGithubStars] = useState(null);
+
+  // Fetch dynamic GitHub stars count
+  useEffect(() => {
+    fetch(GITHUB_API_URL)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.stargazers_count === "number") {
+          setGithubStars(data.stargazers_count);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load trending public snippets
   useEffect(() => {
@@ -143,29 +151,50 @@ vector<int> twoSum(vector<int>& nums, int target) {
     <div className="min-h-screen bg-[#141414] text-gray-200 selection:bg-[#ffa116] selection:text-black">
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#1e1e1e]/90 backdrop-blur-md border-b border-[#2d2d2d] px-4 sm:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-2">
               <CodePadBrand />
             </Link>
-            <span className="bg-[#ffa116]/10 text-[#ffa116] border border-[#ffa116]/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-              v2.0
-            </span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-6 text-xs font-medium text-gray-300">
             <a href="#features" className="hover:text-white transition-colors">
               Features
             </a>
-            <a href="#languages" className="hover:text-white transition-colors">
-              Languages
-            </a>
             <Link to="/explore" className="hover:text-white transition-colors">
-              Community Explore
+              Explore Community
             </Link>
+            <a
+              href={`${GITHUB_REPO_URL}/blob/main/CONTRIBUTING.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors flex items-center space-x-1"
+            >
+              <span>Contribute</span>
+            </a>
           </nav>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Dynamic GitHub Stars Button */}
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-gray-200 bg-[#252525] hover:bg-[#303030] border border-[#3e3e3e] rounded-lg transition-all hover:border-gray-500"
+              title="Star CodePad on GitHub"
+            >
+              <FontAwesomeIcon icon={faGithub} className="text-sm text-white" />
+              <span className="hidden sm:inline font-semibold">Star</span>
+              {githubStars !== null ? (
+                <span className="bg-[#171717] text-[#ffa116] text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full border border-[#383838]">
+                  {githubStars}
+                </span>
+              ) : (
+                <FontAwesomeIcon icon={faStar} className="text-[#ffa116] text-[10px]" />
+              )}
+            </a>
+
             {user ? (
               <div className="flex items-center space-x-2">
                 <Link
@@ -177,11 +206,11 @@ vector<int> twoSum(vector<int>& nums, int target) {
                   ) : (
                     <span className="font-bold text-[#ffa116]">@{user.username}</span>
                   )}
-                  <span>@{user.username}</span>
+                  <span className="hidden sm:inline">@{user.username}</span>
                 </Link>
                 <Link
                   to="/ide"
-                  className="px-3 py-1.5 text-xs font-semibold bg-[#2cbb5d] hover:bg-[#26a050] text-white rounded-lg transition-colors shadow"
+                  className="px-3 py-1.5 text-xs font-semibold bg-[#ffa116] hover:bg-[#e08d0e] text-black rounded-lg transition-colors shadow"
                 >
                   Open IDE
                 </Link>
@@ -216,7 +245,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2cbb5d] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2cbb5d]"></span>
             </span>
-            <span>Now with Cloud Persistence, Google OAuth & Social Discovery</span>
+            <span>Now with Persistent Codes, Google OAuth & Community Explore</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-tight">
@@ -234,7 +263,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
             <Link
               to="/ide"
-              className="flex items-center space-x-2 px-6 py-3 bg-[#2cbb5d] hover:bg-[#26a050] text-white text-sm font-semibold rounded-xl shadow-lg transition-all active:scale-95 hover:shadow-[#2cbb5d]/20"
+              className="flex items-center space-x-2 px-6 py-3 bg-[#ffa116] hover:bg-[#e08d0e] text-black text-sm font-bold rounded-xl shadow-lg transition-all active:scale-95 hover:shadow-[#ffa116]/20"
             >
               <FontAwesomeIcon icon={faPlay} />
               <span>Launch IDE Playground</span>
@@ -317,7 +346,7 @@ vector<int> twoSum(vector<int>& nums, int target) {
               type="button"
               onClick={handleRunDemo}
               disabled={demoRunning}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#2cbb5d] hover:bg-[#26a050] text-white text-xs font-semibold rounded-md transition-all shadow"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#ffa116] hover:bg-[#e08d0e] text-black text-xs font-bold rounded-md transition-all shadow"
             >
               {demoRunning ? (
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
@@ -380,28 +409,6 @@ vector<int> twoSum(vector<int>& nums, int target) {
         </div>
       </section>
 
-      {/* Languages Section */}
-      <section id="languages" className="py-16 px-4 sm:px-8 bg-[#181818] border-t border-b border-[#2d2d2d]">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Supported Compilers & Runtimes</h2>
-            <p className="text-xs text-gray-400">All runtimes are pre-installed in native Docker containers.</p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {POPULAR_LANGUAGES.map((lang) => (
-              <div
-                key={lang.id}
-                className="bg-[#222222] border border-[#333333] rounded-lg p-3 text-center space-y-1 hover:border-[#2cbb5d] transition-colors"
-              >
-                <div className="text-xs font-bold text-white truncate">{lang.name}</div>
-                <div className="text-[10px] text-[#2cbb5d] font-mono">{lang.badge}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Trending Community Snippets */}
       {trendingSnippets.length > 0 && (
         <section className="py-20 px-4 sm:px-8 max-w-7xl mx-auto space-y-8">
@@ -451,19 +458,47 @@ vector<int> twoSum(vector<int>& nums, int target) {
         </section>
       )}
 
-      {/* CTA Footer Banner */}
+      {/* Support & Contribute Section (Replaces Ready to Code) */}
       <section className="py-20 px-4 sm:px-8 text-center bg-gradient-to-b from-[#141414] to-[#1c1c1c] border-t border-[#262626]">
-        <div className="max-w-2xl mx-auto space-y-5">
-          <h2 className="text-3xl font-extrabold text-white">Ready to Code & Test?</h2>
-          <p className="text-xs text-gray-400">
-            No registration or credit card required. Jump straight into the IDE or sign in with Google to save to cloud.
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-[#252525] border border-[#3e3e3e] rounded-full text-xs text-[#ffa116]">
+            <FontAwesomeIcon icon={faHeart} className="text-red-500" />
+            <span>Open Source & Community Driven</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Support & Contribute to CodePad</h2>
+          <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+            CodePad is free and open-source. Help us build the ultimate algorithmic playground by starring the
+            repository on GitHub, submitting PRs, or suggesting new compiler features.
           </p>
-          <div className="flex justify-center pt-2">
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 px-6 py-3 bg-[#ffa116] hover:bg-[#e08d0e] text-black font-bold text-sm rounded-xl shadow-lg transition-all active:scale-95"
+            >
+              <FontAwesomeIcon icon={faStar} />
+              <span>Star on GitHub {githubStars !== null && `(${githubStars})`}</span>
+            </a>
+
+            <a
+              href={`${GITHUB_REPO_URL}/blob/main/CONTRIBUTING.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 px-6 py-3 bg-[#262626] hover:bg-[#303030] border border-[#3e3e3e] text-white text-sm font-semibold rounded-xl transition-all"
+            >
+              <FontAwesomeIcon icon={faCodeBranch} className="text-[#2cbb5d]" />
+              <span>Contribute Code</span>
+            </a>
+
             <Link
               to="/ide"
-              className="px-8 py-3.5 bg-[#2cbb5d] hover:bg-[#26a050] text-white font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95"
+              className="flex items-center space-x-2 px-6 py-3 bg-[#1e1e1e] hover:bg-[#282828] border border-[#3e3e3e] text-gray-300 hover:text-white text-sm font-semibold rounded-xl transition-all"
             >
-              Launch CodePad IDE Free
+              <FontAwesomeIcon icon={faPlay} className="text-xs" />
+              <span>Open IDE</span>
             </Link>
           </div>
         </div>
@@ -475,6 +510,23 @@ vector<int> twoSum(vector<int>& nums, int target) {
           <CodePadBrand />
           <div>CodePad • Cloud Sandboxed Multi-Language Playground & Social Hub</div>
           <div className="flex items-center space-x-4">
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-300 flex items-center space-x-1"
+            >
+              <FontAwesomeIcon icon={faGithub} />
+              <span>GitHub</span>
+            </a>
+            <a
+              href={`${GITHUB_REPO_URL}/blob/main/CONTRIBUTING.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-300"
+            >
+              Contribute
+            </a>
             <Link to="/ide" className="hover:text-gray-300">
               IDE
             </Link>

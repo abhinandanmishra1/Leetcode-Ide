@@ -1,15 +1,13 @@
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faBolt, faCircleExclamation, faUserShield } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faCircleExclamation, faUserShield } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../context/AuthContext";
 
 const AuthModal = ({ isOpen, onClose, onSuccess }) => {
-  const { loginWithGoogle, devLogin } = useAuth();
+  const { loginWithGoogle } = useAuth();
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleGoogleSuccess = async (credentialResponse) => {
     setError(null);
@@ -28,21 +26,14 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
     setError("Google Sign-In prompt was closed or failed to initialize.");
   };
 
-  const handleDevLogin = async () => {
-    setError(null);
-    setIsSubmitting(true);
-    const res = await devLogin({
-      email: "developer@codepad.local",
-      name: "CodePad Developer",
-    });
-    setIsSubmitting(false);
-    if (res.success) {
-      if (onSuccess) onSuccess(res.user);
-      onClose();
-    } else {
-      setError(res.error || "Dev login failed.");
-    }
-  };
+  // Enable Google One-Tap prompt automatically
+  useGoogleOneTapLogin({
+    onSuccess: (credentialResponse) => handleGoogleSuccess(credentialResponse),
+    onError: () => handleGoogleError(),
+    disabled: !isOpen,
+  });
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -66,7 +57,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Body */}
         <div className="p-6 space-y-5">
           <p className="text-xs text-gray-400 text-center leading-relaxed">
-            Sign in to save your solutions to MongoDB cloud, generate permanent shareable URLs, and follow top coders.
+            Sign in with Google to save your code to cloud, generate permanent shareable URLs, and follow top coders.
           </p>
 
           {error && (
@@ -86,26 +77,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
               text="continue_with"
               size="large"
               width="280"
+              useOneTap={true}
+              auto_select={false}
             />
           </div>
-
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-[#333333] w-full" />
-            <span className="bg-[#1e1e1e] px-3 text-[11px] uppercase tracking-wider text-gray-500 absolute">
-              or
-            </span>
-          </div>
-
-          {/* Dev Login Shortcut */}
-          <button
-            type="button"
-            onClick={handleDevLogin}
-            disabled={isSubmitting}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-[#2a2a2a] hover:bg-[#333333] border border-[#444444] rounded-lg text-xs font-semibold text-gray-200 hover:text-white transition-all active:scale-[0.99] disabled:opacity-50 shadow"
-          >
-            <FontAwesomeIcon icon={faBolt} className="text-[#ffa116] text-xs" />
-            <span>Instant Developer Login (Local / Offline)</span>
-          </button>
         </div>
 
         {/* Footer */}

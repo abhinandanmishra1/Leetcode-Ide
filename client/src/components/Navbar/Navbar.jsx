@@ -215,19 +215,6 @@ const Navbar = ({
           )}
         </div>
 
-        {/* Save to Cloud (MongoDB) */}
-        {onSaveToCloud && (
-          <button
-            type="button"
-            onClick={onSaveToCloud}
-            title="Save code to MongoDB cloud"
-            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-white bg-[#1b4332] hover:bg-[#2d6a4f] border border-[#40916c]/60 rounded-md transition-colors"
-          >
-            <FontAwesomeIcon icon={faCloudArrowUp} className="text-xs text-[#52b788]" />
-            <span className="font-semibold hidden md:inline">Cloud Save</span>
-          </button>
-        )}
-
         {/* Share Button */}
         {onShare && (
           <button

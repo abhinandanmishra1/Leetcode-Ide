@@ -395,8 +395,14 @@ function IdePage() {
         setLanguage={handleLanguageChange}
         onRun={handleRunCode}
         onReset={() => setIsResetModalOpen(true)}
-        onOpenSaveModal={() => setIsSaveModalOpen(true)}
-        onSaveToCloud={handleSaveToCloud}
+        onOpenSaveModal={() => {
+          if (!user) {
+            setIsAuthModalOpen(true);
+            showToast("Please sign in with Google to save your code to cloud.", "info");
+          } else {
+            setIsSaveModalOpen(true);
+          }
+        }}
         onShare={handleOpenShare}
         activeSnippetId={cloudSnippet?.snippetId}
         savedProblems={savedProblems}
@@ -491,11 +497,34 @@ function IdePage() {
       <SaveModal
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
-        onSave={(data) => {
+        onSave={async (data) => {
           const saved = saveProblem(data);
           if (saved) {
             setSavedProblems(getSavedProblems());
-            showToast(`Saved "${saved.name}" locally!`);
+          }
+          if (user) {
+            try {
+              const payload = {
+                title: data.name || `${language.name} Solution`,
+                languageId: data.languageId || language.id,
+                languageName: data.languageName || language.name,
+                code: data.code || code,
+                testCases: data.testCases || testCases,
+                isPublic: true,
+              };
+              if (cloudSnippet && cloudSnippet.author?.id === user.id) {
+                const updated = await snippetsApi.update(cloudSnippet.snippetId, payload);
+                setCloudSnippet(updated);
+                showToast(`Saved "${data.name}" to Cloud!`);
+              } else {
+                const created = await snippetsApi.create(payload);
+                setCloudSnippet(created);
+                showToast(`Saved "${data.name}" to Cloud! (ID: ${created.snippetId})`);
+                navigate(`/s/${created.snippetId}`, { replace: true });
+              }
+            } catch (err) {
+              showToast(`Saved "${data.name}" locally.`, "info");
+            }
           }
         }}
         currentLanguage={language}

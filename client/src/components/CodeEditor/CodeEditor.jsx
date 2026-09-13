@@ -204,7 +204,7 @@ const CodeEditor = ({
               type="button"
               onClick={onOpenSnippetsModal}
               title="Open Snippet Library (type /command to expand)"
-              className="inline-flex items-center space-x-1.5 text-xs text-white bg-[#1b8196] hover:bg-[#209bb4] px-2.5 py-0.5 rounded-md font-medium transition-colors shadow-sm active:scale-95"
+              className="inline-flex items-center space-x-1.5 text-xs text-black bg-[#ffa116] hover:bg-[#e08d0e] px-2.5 py-0.5 rounded-md font-semibold transition-all shadow-sm active:scale-95"
             >
               <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
               <span>Snippets</span>
