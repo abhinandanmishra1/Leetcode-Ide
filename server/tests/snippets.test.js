@@ -116,7 +116,7 @@ test('PUT /snippets/:snippetId returns 403 Forbidden for non-author', async () =
   assert.strictEqual(res.status, 403);
 });
 
-test('POST /snippets/:snippetId/fork creates a clone and tracks parent snippet', async () => {
+test('POST /snippets/:snippetId/fork creates a clone without copying command', async () => {
   const res = await fetch(`${baseUrl}/snippets/${createdSnippetId}/fork`, {
     method: 'POST',
     headers: {
@@ -131,6 +131,7 @@ test('POST /snippets/:snippetId/fork creates a clone and tracks parent snippet',
   assert.notStrictEqual(data.snippetId, createdSnippetId);
   assert.strictEqual(data.forkedFrom, createdSnippetId);
   assert.strictEqual(data.author.name, 'Other Dev');
+  assert.strictEqual(data.command, ''); // command must NOT be copied on fork
 
   // Verify parent's forksCount incremented
   const parentRes = await fetch(`${baseUrl}/snippets/${createdSnippetId}`);
@@ -143,8 +144,40 @@ test('GET /snippets returns paginated public snippets list', async () => {
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.ok(Array.isArray(data.snippets));
-  assert.ok(data.snippets.length >= 2);
+  assert.ok(data.snippets.length >= 1);
   assert.ok(data.pagination);
   assert.strictEqual(data.pagination.page, 1);
-  assert.ok(data.pagination.total >= 2);
+  assert.ok(data.pagination.total >= 1);
+});
+
+test('PUT /snippets/:snippetId can toggle visibility to private and blocks non-author', async () => {
+  // Author sets to private
+  const putRes = await fetch(`${baseUrl}/snippets/${createdSnippetId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authorToken}`,
+    },
+    body: JSON.stringify({ visibility: 'private' }),
+  });
+  assert.strictEqual(putRes.status, 200);
+  const putData = await putRes.json();
+  assert.strictEqual(putData.visibility, 'private');
+  assert.strictEqual(putData.isPublic, false);
+
+  // Other user gets 403 Forbidden
+  const forbiddenRes = await fetch(`${baseUrl}/snippets/${createdSnippetId}`, {
+    headers: { Authorization: `Bearer ${otherToken}` },
+  });
+  assert.strictEqual(forbiddenRes.status, 403);
+
+  // Anonymous guest gets 403 Forbidden
+  const guestRes = await fetch(`${baseUrl}/snippets/${createdSnippetId}`);
+  assert.strictEqual(guestRes.status, 403);
+
+  // Author can still access
+  const authorRes = await fetch(`${baseUrl}/snippets/${createdSnippetId}`, {
+    headers: { Authorization: `Bearer ${authorToken}` },
+  });
+  assert.strictEqual(authorRes.status, 200);
 });

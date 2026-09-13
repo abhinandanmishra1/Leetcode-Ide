@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlay,
@@ -23,6 +23,7 @@ import { CodePadBrand } from "../Brand/CodePadLogo";
 import { useAuth } from "../../context/AuthContext";
 import UserAvatar from "../common/UserAvatar";
 import Tooltip from "../ui/tooltip";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 
 const Navbar = ({
   language,
@@ -44,11 +45,22 @@ const Navbar = ({
   onOpenAuthModal,
 }) => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const isInIdeOrViewingCode =
+    location.pathname === "/ide" || location.pathname.startsWith("/s/");
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
+  const [problemToDelete, setProblemToDelete] = useState(null);
   const dropdownRef = useRef(null);
   const userMenuRef = useRef(null);
+
+  const cleanCommand = (() => {
+    if (!activeSnippetCommand) return "";
+    const match = String(activeSnippetCommand).trim().match(/^(\/[a-z0-9_-]+)/i);
+    return match ? match[1] : "";
+  })();
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -87,13 +99,15 @@ const Navbar = ({
           <CodePadBrand />
         </Link>
         <div className="hidden lg:flex items-center space-x-1 pl-2 border-l border-[#3e3e3e]">
-          <Link
-            to="/ide"
-            className="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded-md hover:bg-[#333333] transition-colors flex items-center space-x-1.5"
-          >
-            <FontAwesomeIcon icon={faCode} className="text-[11px] text-[#ffa116]" />
-            <span>IDE</span>
-          </Link>
+          {!isInIdeOrViewingCode && (
+            <Link
+              to="/ide"
+              className="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded-md hover:bg-[#333333] transition-colors flex items-center space-x-1.5"
+            >
+              <FontAwesomeIcon icon={faCode} className="text-[11px] text-[#ffa116]" />
+              <span>IDE</span>
+            </Link>
+          )}
           <Link
             to="/explore"
             className="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded-md hover:bg-[#333333] transition-colors flex items-center space-x-1.5"
@@ -118,7 +132,7 @@ const Navbar = ({
                 ? user && cloudSnippet?.author?.id === user.id
                   ? `Save changes to "${activeSnippetName}" (Auto-saves to cloud on edit)`
                   : `Save changes to "${activeSnippetName}" ${
-                      activeSnippetCommand ? `(${activeSnippetCommand})` : ""
+                      cleanCommand ? `(${cleanCommand})` : ""
                     } (Ctrl + S)`
                 : "Save snippet to cloud (Ctrl + S)"
             }
@@ -141,14 +155,14 @@ const Navbar = ({
                 <>
                   <span className="text-gray-500 text-[11px]">|</span>
                   <span
-                    className="font-medium text-white max-w-[70px] sm:max-w-[110px] md:max-w-[150px] truncate"
+                    className="font-medium text-white max-w-[80px] sm:max-w-[120px] truncate"
                     title={activeSnippetName}
                   >
                     {activeSnippetName}
                   </span>
-                  {activeSnippetCommand && (
-                    <span className="text-[#ffa116] bg-[#ffa116]/10 border border-[#ffa116]/30 px-1 py-0.2 rounded font-mono text-[10px] hidden sm:inline">
-                      {activeSnippetCommand}
+                  {cleanCommand && (
+                    <span className="text-[#ffa116] bg-[#ffa116]/10 border border-[#ffa116]/30 px-1.5 py-0.5 rounded font-mono text-[10px] hidden sm:inline truncate max-w-[80px]">
+                      {cleanCommand}
                     </span>
                   )}
                 </>
@@ -240,12 +254,9 @@ const Navbar = ({
                       <div className="flex items-center space-x-1 flex-shrink-0">
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm(`Delete "${problem.name}"?`)) {
-                              onDeleteProblem(problem.id);
-                            }
-                          }}
+                          onClick={() => setProblemToDelete(problem)}
                           className="p-1 text-gray-500 hover:text-red-400 rounded transition-colors"
+                          title="Delete saved code"
                         >
                           <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
                         </button>
@@ -451,6 +462,19 @@ const Navbar = ({
           </Tooltip>
         )}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={Boolean(problemToDelete)}
+        onClose={() => setProblemToDelete(null)}
+        onConfirm={() => {
+          if (problemToDelete) {
+            onDeleteProblem(problemToDelete.id);
+            setProblemToDelete(null);
+          }
+        }}
+        title="Delete Saved Code"
+        itemName={problemToDelete?.name}
+      />
     </div>
   );
 };

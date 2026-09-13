@@ -11,6 +11,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import Tooltip from "../ui/tooltip";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 
 export const SnippetLibraryModal = ({
   isOpen,
@@ -22,15 +23,16 @@ export const SnippetLibraryModal = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedCmd, setCopiedCmd] = useState(null);
+  const [snippetToDelete, setSnippetToDelete] = useState(null);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return allSnippets;
     const q = searchQuery.toLowerCase();
     return allSnippets.filter(
       (s) =>
-        s.command.toLowerCase().includes(q) ||
         s.name.toLowerCase().includes(q) ||
-        (s.description && s.description.toLowerCase().includes(q))
+        s.command.toLowerCase().includes(q) ||
+        (s.code && s.code.toLowerCase().includes(q))
     );
   }, [allSnippets, searchQuery]);
 
@@ -45,12 +47,7 @@ export const SnippetLibraryModal = ({
   };
 
   const handleDelete = (snippet) => {
-    const confirmDelete = window.confirm(
-      `Delete snippet "${snippet.name}" (${snippet.command}) for ${currentLanguage?.name || "this language"} permanently?\n\nThis will remove it from your saved snippets and slash commands.`
-    );
-    if (confirmDelete && onDeleteSnippet) {
-      onDeleteSnippet(snippet.command, snippet.languageId || currentLanguage?.id);
-    }
+    setSnippetToDelete(snippet);
   };
 
   return (
@@ -186,6 +183,19 @@ export const SnippetLibraryModal = ({
           </button>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={Boolean(snippetToDelete)}
+        onClose={() => setSnippetToDelete(null)}
+        onConfirm={() => {
+          if (snippetToDelete && onDeleteSnippet) {
+            onDeleteSnippet(snippetToDelete.command, snippetToDelete.languageId || currentLanguage?.id);
+            setSnippetToDelete(null);
+          }
+        }}
+        title="Delete Snippet"
+        itemName={snippetToDelete ? `${snippetToDelete.name} (${snippetToDelete.command})` : ""}
+      />
     </div>
   );
 };

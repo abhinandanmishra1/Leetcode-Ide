@@ -115,9 +115,41 @@ test('POST /users/:username/follow rejects self-follow', async () => {
 });
 
 test('GET /users/search finds users by search query', async () => {
-  const res = await fetch(`${baseUrl}/users/search?q=alice`);
+  const res = await fetch(`${baseUrl}/users/search?q=${userA.username}`);
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.ok(Array.isArray(data));
   assert.ok(data.some((u) => u.username === userA.username));
 });
+
+test('GET /users/:username/followers and /following lists populate users and follow status', async () => {
+  // Follow User A as User B
+  await fetch(`${baseUrl}/users/${userA.username}/follow`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${tokenB}` },
+  });
+
+  // Get User A followers from User B perspective
+  const followersRes = await fetch(`${baseUrl}/users/${userA.username}/followers`, {
+    headers: { Authorization: `Bearer ${tokenB}` },
+  });
+  assert.strictEqual(followersRes.status, 200);
+  const followers = await followersRes.json();
+  assert.ok(Array.isArray(followers));
+  assert.strictEqual(followers.length, 1);
+  assert.strictEqual(followers[0].username, userB.username);
+  assert.strictEqual(followers[0].isSelf, true); // User B inspecting self in list
+
+  // Get User B following from User A perspective
+  const followingRes = await fetch(`${baseUrl}/users/${userB.username}/following`, {
+    headers: { Authorization: `Bearer ${tokenA}` },
+  });
+  assert.strictEqual(followingRes.status, 200);
+  const following = await followingRes.json();
+  assert.ok(Array.isArray(following));
+  assert.strictEqual(following.length, 1);
+  assert.strictEqual(following[0].username, userA.username);
+  assert.strictEqual(following[0].isFollowing, false); // User A doesn't follow User A
+  assert.strictEqual(following[0].isSelf, true); // User A is self
+});
+

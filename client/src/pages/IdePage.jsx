@@ -206,7 +206,8 @@ function IdePage() {
         setCloudSnippet(data);
         setCurrentProblem({
           name: data.title,
-          command: data.description?.startsWith("/") ? data.description : null,
+          command: data.command || null,
+          description: data.description || "",
           id: data.snippetId,
           isCloud: true,
         });
@@ -225,7 +226,12 @@ function IdePage() {
         const isAuthor = user && data.author && user.id === data.author.id;
         setIsReadOnly(!isAuthor);
       } catch (err) {
-        showToast("Snippet not found or failed to load.", "info");
+        const msg =
+          err.response?.status === 403
+            ? "This snippet is private. Only the author can access it."
+            : "Snippet not found or failed to load.";
+        showToast(msg, "error");
+        navigate("/ide", { replace: true });
       }
     };
 
@@ -272,12 +278,14 @@ function IdePage() {
       try {
         const payload = {
           title: targetProblem?.name || targetSnippet.title || `${latestLang.name} Solution`,
-          description: targetProblem?.command || (targetSnippet.description?.startsWith("/") ? targetSnippet.description : ""),
+          command: targetProblem?.command || targetSnippet.command || "",
+          description: targetProblem?.description || targetSnippet.description || "",
           languageId: latestLang.id,
           languageName: latestLang.name,
           code: latestCode,
           testCases: latestCases,
-          isPublic: true,
+          visibility: targetSnippet.visibility || (targetSnippet.isPublic ? "public" : "unlisted"),
+          isPublic: targetSnippet.visibility === "public",
         };
 
         const updated = await snippetsApi.update(targetSnippet.snippetId, payload);
@@ -288,7 +296,8 @@ function IdePage() {
         saveProblem({
           id: targetProblem?.id || targetSnippet.snippetId,
           name: payload.title,
-          command: payload.description || null,
+          command: payload.command || null,
+          description: payload.description || "",
           languageId: latestLang.id,
           languageName: latestLang.name,
           code: latestCode,
@@ -452,7 +461,8 @@ function IdePage() {
       setCloudSnippet(forked);
       setCurrentProblem({
         name: forked.title,
-        command: forked.description?.startsWith("/") ? forked.description : null,
+        command: null, // Do not copy command on fork
+        description: forked.description || "",
         id: forked.snippetId,
         isCloud: true,
       });
@@ -624,24 +634,26 @@ function IdePage() {
             try {
               const payload = {
                 title: saveName,
-                description: saveCmd || "",
+                command: saveCmd || "",
+                description: currentProblem?.description || cloudSnippet?.description || "",
                 languageId: language.id,
                 languageName: language.name,
                 code,
                 testCases,
-                isPublic: true,
+                visibility: cloudSnippet?.visibility || (cloudSnippet?.isPublic ? "public" : "unlisted"),
+                isPublic: cloudSnippet?.visibility === "public",
               };
 
               if (cloudSnippet && cloudSnippet.author?.id === user.id) {
                 const updated = await snippetsApi.update(cloudSnippet.snippetId, payload);
                 setCloudSnippet(updated);
-                setCurrentProblem({ name: updated.title, command: saveCmd, id: updated.snippetId, isCloud: true });
+                setCurrentProblem({ name: updated.title, command: saveCmd, description: payload.description, id: updated.snippetId, isCloud: true });
                 setCloudSyncStatus("saved");
                 showToast(`Saved changes to "${saveName}" on Cloud!`);
               } else {
                 const created = await snippetsApi.create(payload);
                 setCloudSnippet(created);
-                setCurrentProblem({ name: created.title, command: saveCmd, id: created.snippetId, isCloud: true });
+                setCurrentProblem({ name: created.title, command: saveCmd, description: payload.description, id: created.snippetId, isCloud: true });
                 setCloudSyncStatus("saved");
                 showToast(`Saved "${saveName}" to Cloud!`);
                 navigate(`/s/${created.snippetId}`, { replace: true });
@@ -656,7 +668,7 @@ function IdePage() {
         onShare={handleOpenShare}
         activeSnippetId={cloudSnippet?.snippetId || currentProblem?.id}
         activeSnippetName={currentProblem?.name || cloudSnippet?.title || ""}
-        activeSnippetCommand={currentProblem?.command || (cloudSnippet?.description?.startsWith("/") ? cloudSnippet.description : "")}
+        activeSnippetCommand={currentProblem?.command || cloudSnippet?.command || ""}
         cloudSnippet={cloudSnippet}
         cloudSyncStatus={cloudSyncStatus}
         savedProblems={savedProblems}
@@ -765,7 +777,8 @@ function IdePage() {
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
         initialName={currentProblem?.name || cloudSnippet?.title || ""}
-        initialCommand={currentProblem?.command || (cloudSnippet?.description?.startsWith("/") ? cloudSnippet.description : "")}
+        initialCommand={currentProblem?.command || cloudSnippet?.command || ""}
+        initialDescription={currentProblem?.description || cloudSnippet?.description || ""}
         onSave={async (data) => {
           if (cloudSyncTimeoutRef.current) {
             clearTimeout(cloudSyncTimeoutRef.current);
@@ -778,6 +791,7 @@ function IdePage() {
           setCurrentProblem({
             name: data.name,
             command: data.command || null,
+            description: data.description || "",
             id: data.id,
             isCloud: !!user,
           });
@@ -785,12 +799,14 @@ function IdePage() {
             try {
               const payload = {
                 title: data.name || `${language.name} Solution`,
-                description: data.command || "",
+                command: data.command || "",
+                description: data.description || "",
                 languageId: data.languageId || language.id,
                 languageName: data.languageName || language.name,
                 code: data.code || code,
                 testCases: data.testCases || testCases,
-                isPublic: true,
+                visibility: cloudSnippet?.visibility || "unlisted",
+                isPublic: cloudSnippet?.visibility === "public",
               };
               if (cloudSnippet && cloudSnippet.author?.id === user.id) {
                 const updated = await snippetsApi.update(cloudSnippet.snippetId, payload);
@@ -862,6 +878,16 @@ function IdePage() {
         snippetId={cloudSnippet?.snippetId}
         title={cloudSnippet?.title}
         languageName={cloudSnippet?.languageName || language.name}
+        initialVisibility={cloudSnippet?.visibility || (cloudSnippet?.isPublic ? "public" : "unlisted")}
+        isAuthor={!cloudSnippet?.author || (user && cloudSnippet.author.id === user.id)}
+        onVisibilityChange={(newVis) => {
+          setCloudSnippet((prev) => (prev ? { ...prev, visibility: newVis, isPublic: newVis === "public" } : prev));
+          showToast(
+            `Snippet access updated to ${
+              newVis === "private" ? "Private" : newVis === "public" ? "Public (Explore)" : "Anyone with URL"
+            }`
+          );
+        }}
       />
 
       <AuthModal

@@ -25,6 +25,7 @@ import { useAuth } from "../context/AuthContext";
 import { snippetsApi, submitCode } from "../api";
 import { saveCode, saveLanguage } from "../utils/storage";
 import { LANGUAGES } from "../constants/languages";
+import Editor from "@monaco-editor/react";
 
 const GITHUB_REPO_URL = "https://github.com/abhinandanmishra1/Leetcode-Ide";
 const GITHUB_API_URL = "https://api.github.com/repos/abhinandanmishra1/Leetcode-Ide";
@@ -452,20 +453,48 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
 
           {/* Card Body */}
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#333333]">
-            <div className="p-4 bg-[#1a1a1a] font-mono text-xs text-gray-300 overflow-x-auto leading-relaxed">
-              <pre>{demoCodes[demoCodeLang]}</pre>
+            <div className="h-[280px] bg-[#1e1e1e]">
+              <Editor
+                height="100%"
+                language={
+                  demoCodeLang === "cpp"
+                    ? "cpp"
+                    : demoCodeLang === "python"
+                    ? "python"
+                    : "javascript"
+                }
+                value={demoCodes[demoCodeLang]}
+                theme="vs-dark"
+                options={{
+                  readOnly: true,
+                  domReadOnly: true,
+                  fontSize: 12,
+                  fontFamily: "'Fira Code', Menlo, Monaco, Consolas, 'Courier New', monospace",
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  lineNumbers: "on",
+                  renderLineHighlight: "none",
+                  padding: { top: 10, bottom: 10 },
+                  overviewRulerBorder: false,
+                  scrollbar: {
+                    verticalScrollbarSize: 6,
+                    horizontalScrollbarSize: 6,
+                  },
+                }}
+              />
             </div>
-            <div className="p-4 bg-[#141414] font-mono text-xs flex flex-col justify-between space-y-4">
-              <div>
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+            <div className="p-4 bg-[#141414] font-mono text-xs flex flex-col justify-between h-[280px]">
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5 flex-shrink-0">
                   <FontAwesomeIcon icon={faTerminal} className="text-[#ffa116]" />
                   <span>Execution Output Console</span>
                 </div>
-                <div className="bg-[#1c1c1c] p-3 rounded-lg border border-[#2d2d2d] text-gray-300 min-h-[140px] whitespace-pre-wrap">
+                <div className="bg-[#1c1c1c] p-3 rounded-lg border border-[#2d2d2d] text-gray-300 flex-1 overflow-y-auto whitespace-pre-wrap font-mono text-[11px]">
                   {demoOutput}
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-[#262626]">
+              <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-[#262626] flex-shrink-0">
                 <span>Input: nums = [2,7,11,15], target = 9</span>
                 <button
                   type="button"

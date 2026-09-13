@@ -82,8 +82,8 @@ router.get('/:username', optionalAuth, async (req, res) => {
   }
 });
 
-// GET /users/:username/snippets - Fetch public snippets authored by user
-router.get('/:username/snippets', async (req, res) => {
+// GET /users/:username/snippets - Fetch snippets authored by user (all if self, public only for others)
+router.get('/:username/snippets', optionalAuth, async (req, res) => {
   let username = req.params.username.toLowerCase().trim();
   if (username === 'author') {
     username = 'admin';
@@ -95,7 +95,13 @@ router.get('/:username/snippets', async (req, res) => {
       return res.status(404).json({ error: 'Not Found', message: 'User not found' });
     }
 
-    const snippets = await Snippet.find({ author: user._id, isPublic: true })
+    const isSelf = req.user && req.user._id.toString() === user._id.toString();
+    const filter = { author: user._id };
+    if (!isSelf) {
+      filter.$or = [{ visibility: 'public' }, { isPublic: true, visibility: { $ne: 'private' } }];
+    }
+
+    const snippets = await Snippet.find(filter)
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -105,7 +111,10 @@ router.get('/:username/snippets', async (req, res) => {
         id: s._id.toString(),
         snippetId: s.snippetId,
         title: s.title,
+        command: s.command || '',
         description: s.description || '',
+        visibility: s.visibility || (s.isPublic ? 'public' : 'unlisted'),
+        isPublic: s.visibility ? s.visibility === 'public' : Boolean(s.isPublic),
         languageId: s.languageId,
         languageName: s.languageName,
         code: s.code,
@@ -171,6 +180,122 @@ router.post('/:username/follow', authenticateUser, async (req, res) => {
     }
   } catch (err) {
     logger.error({ err: err.message, username }, 'Failed to toggle follow');
+    res.status(500).json({ error: 'Internal Error', message: err.message });
+  }
+});
+
+// GET /users/:username/followers - List followers of user
+router.get('/:username/followers', optionalAuth, async (req, res) => {
+  let username = req.params.username.toLowerCase().trim();
+  if (username === 'author') {
+    username = 'admin';
+  }
+
+  try {
+    const targetUser = await User.findOne({ username });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Not Found', message: 'User not found' });
+    }
+
+    const followRecords = await Follow.find({ following: targetUser._id })
+      .populate('follower', 'name username avatar bio createdAt')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    const followerUserIds = followRecords
+      .map((r) => r.follower?._id)
+      .filter(Boolean);
+
+    let followedSet = new Set();
+    if (req.user && followerUserIds.length > 0) {
+      const myFollows = await Follow.find({
+        follower: req.user._id,
+        following: { $in: followerUserIds },
+      })
+        .select('following')
+        .lean();
+      followedSet = new Set(myFollows.map((f) => f.following.toString()));
+    }
+
+    const result = followRecords
+      .filter((r) => r.follower)
+      .map((r) => {
+        const u = r.follower;
+        const uid = u._id.toString();
+        return {
+          id: uid,
+          name: u.name,
+          username: u.username,
+          avatar: u.avatar,
+          bio: u.bio || '',
+          isFollowing: followedSet.has(uid),
+          isSelf: req.user ? req.user._id.toString() === uid : false,
+          createdAt: r.createdAt,
+        };
+      });
+
+    res.json(result);
+  } catch (err) {
+    logger.error({ err: err.message, username }, 'Failed to fetch followers');
+    res.status(500).json({ error: 'Internal Error', message: err.message });
+  }
+});
+
+// GET /users/:username/following - List users followed by user
+router.get('/:username/following', optionalAuth, async (req, res) => {
+  let username = req.params.username.toLowerCase().trim();
+  if (username === 'author') {
+    username = 'admin';
+  }
+
+  try {
+    const targetUser = await User.findOne({ username });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Not Found', message: 'User not found' });
+    }
+
+    const followRecords = await Follow.find({ follower: targetUser._id })
+      .populate('following', 'name username avatar bio createdAt')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    const followingUserIds = followRecords
+      .map((r) => r.following?._id)
+      .filter(Boolean);
+
+    let followedSet = new Set();
+    if (req.user && followingUserIds.length > 0) {
+      const myFollows = await Follow.find({
+        follower: req.user._id,
+        following: { $in: followingUserIds },
+      })
+        .select('following')
+        .lean();
+      followedSet = new Set(myFollows.map((f) => f.following.toString()));
+    }
+
+    const result = followRecords
+      .filter((r) => r.following)
+      .map((r) => {
+        const u = r.following;
+        const uid = u._id.toString();
+        return {
+          id: uid,
+          name: u.name,
+          username: u.username,
+          avatar: u.avatar,
+          bio: u.bio || '',
+          isFollowing: followedSet.has(uid),
+          isSelf: req.user ? req.user._id.toString() === uid : false,
+          createdAt: r.createdAt,
+        };
+      });
+
+    res.json(result);
+  } catch (err) {
+    logger.error({ err: err.message, username }, 'Failed to fetch following users');
     res.status(500).json({ error: 'Internal Error', message: err.message });
   }
 });

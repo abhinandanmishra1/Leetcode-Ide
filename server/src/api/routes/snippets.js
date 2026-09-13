@@ -8,16 +8,19 @@ const router = express.Router();
 // Helper to format snippet for client response
 function formatSnippet(snippet) {
   const obj = snippet.toObject ? snippet.toObject() : snippet;
+  const visibility = obj.visibility || (obj.isPublic ? 'public' : 'unlisted');
   return {
     id: obj._id ? obj._id.toString() : obj.id,
     snippetId: obj.snippetId,
     title: obj.title,
+    command: obj.command || '',
     description: obj.description || '',
     languageId: obj.languageId,
     languageName: obj.languageName,
     code: obj.code,
     testCases: obj.testCases || [],
-    isPublic: obj.isPublic ?? true,
+    visibility,
+    isPublic: visibility === 'public',
     viewsCount: obj.viewsCount || 0,
     forksCount: obj.forksCount || 0,
     forkedFrom: obj.forkedFrom || null,
@@ -36,7 +39,7 @@ function formatSnippet(snippet) {
 
 // POST /snippets - Save or publish new snippet
 router.post('/', optionalAuth, async (req, res) => {
-  const { title, description, languageId, languageName, code, testCases, isPublic } = req.body;
+  const { title, command, description, languageId, languageName, code, testCases, isPublic, visibility } = req.body;
 
   if (!languageId || !languageName || typeof code !== 'string') {
     return res.status(400).json({
@@ -46,15 +49,21 @@ router.post('/', optionalAuth, async (req, res) => {
   }
 
   try {
+    const chosenVisibility = visibility && ['unlisted', 'public', 'private'].includes(visibility)
+      ? visibility
+      : isPublic ? 'public' : 'unlisted';
+
     const snippet = await Snippet.create({
       title: (title || 'Untitled Snippet').trim().slice(0, 120),
+      command: (command || '').trim().slice(0, 50),
       description: (description || '').trim().slice(0, 500),
       languageId: Number(languageId),
       languageName: String(languageName).trim(),
       code,
       testCases: Array.isArray(testCases) ? testCases : [],
       author: req.user ? req.user._id : null,
-      isPublic: isPublic !== undefined ? Boolean(isPublic) : true,
+      visibility: chosenVisibility,
+      isPublic: chosenVisibility === 'public',
     });
 
     if (snippet.author) {
@@ -77,7 +86,9 @@ router.get('/', async (req, res) => {
     const skip = (page - 1) * limit;
     const { languageId, sort, search } = req.query;
 
-    const filter = { isPublic: true };
+    const filter = {
+      $or: [{ visibility: 'public' }, { isPublic: true, visibility: { $ne: 'private' } }],
+    };
     if (languageId) {
       filter.languageId = Number(languageId);
     }
@@ -116,19 +127,33 @@ router.get('/', async (req, res) => {
 });
 
 // GET /snippets/:snippetId - Fetch single snippet (and increment view count)
-router.get('/:snippetId', async (req, res) => {
+router.get('/:snippetId', optionalAuth, async (req, res) => {
   const { snippetId } = req.params;
 
   try {
-    const snippet = await Snippet.findOneAndUpdate(
-      { snippetId },
-      { $inc: { viewsCount: 1 } },
-      { returnDocument: 'after' }
-    ).populate('author', 'username name avatar');
+    const snippet = await Snippet.findOne({ snippetId }).populate('author', 'username name avatar');
 
     if (!snippet) {
       return res.status(404).json({ error: 'Not Found', message: 'Snippet not found' });
     }
+
+    const visibility = snippet.visibility || (snippet.isPublic ? 'public' : 'unlisted');
+    if (visibility === 'private') {
+      const isAuthor =
+        req.user &&
+        snippet.author &&
+        (snippet.author._id.toString() === req.user._id.toString() ||
+          snippet.author.toString() === req.user._id.toString());
+      if (!isAuthor) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'This snippet is private. Only the author can access it.',
+        });
+      }
+    }
+
+    snippet.viewsCount = (snippet.viewsCount || 0) + 1;
+    await snippet.save();
 
     res.json(formatSnippet(snippet));
   } catch (err) {
@@ -140,7 +165,7 @@ router.get('/:snippetId', async (req, res) => {
 // PUT /snippets/:snippetId - Update existing snippet (author only)
 router.put('/:snippetId', authenticateUser, async (req, res) => {
   const { snippetId } = req.params;
-  const { title, description, languageId, languageName, code, testCases, isPublic } = req.body;
+  const { title, command, description, languageId, languageName, code, testCases, isPublic, visibility } = req.body;
 
   try {
     const snippet = await Snippet.findOne({ snippetId });
@@ -153,12 +178,20 @@ router.put('/:snippetId', authenticateUser, async (req, res) => {
     }
 
     if (title) snippet.title = title.trim().slice(0, 120);
+    if (command !== undefined) snippet.command = String(command).trim().slice(0, 50);
     if (typeof description === 'string') snippet.description = description.trim().slice(0, 500);
     if (languageId) snippet.languageId = Number(languageId);
     if (languageName) snippet.languageName = String(languageName).trim();
     if (typeof code === 'string') snippet.code = code;
     if (Array.isArray(testCases)) snippet.testCases = testCases;
-    if (isPublic !== undefined) snippet.isPublic = Boolean(isPublic);
+
+    if (visibility && ['unlisted', 'public', 'private'].includes(visibility)) {
+      snippet.visibility = visibility;
+      snippet.isPublic = visibility === 'public';
+    } else if (isPublic !== undefined) {
+      snippet.isPublic = Boolean(isPublic);
+      snippet.visibility = snippet.isPublic ? 'public' : 'unlisted';
+    }
 
     await snippet.save();
     await snippet.populate('author', 'username name avatar');
@@ -183,10 +216,11 @@ router.post('/:snippetId/fork', optionalAuth, async (req, res) => {
     // Increment fork count on original
     await Snippet.updateOne({ _id: original._id }, { $inc: { forksCount: 1 } });
 
-    // Create cloned snippet
+    // Create cloned snippet - DO NOT copy command on fork as per user instruction!
     const forkedTitle = original.title.includes('(Fork)') ? original.title : `${original.title} (Fork)`;
     const forkedSnippet = await Snippet.create({
       title: forkedTitle.slice(0, 120),
+      command: '', // Empty command on fork
       description: original.description || '',
       languageId: original.languageId,
       languageName: original.languageName,
@@ -194,7 +228,8 @@ router.post('/:snippetId/fork', optionalAuth, async (req, res) => {
       testCases: original.testCases || [],
       author: req.user ? req.user._id : null,
       forkedFrom: original.snippetId,
-      isPublic: true,
+      visibility: 'unlisted',
+      isPublic: false,
     });
 
     if (forkedSnippet.author) {

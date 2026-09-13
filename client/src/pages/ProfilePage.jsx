@@ -19,6 +19,7 @@ import {
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import AuthModal from "../components/Auth/AuthModal";
 import UserAvatar from "../components/common/UserAvatar";
+import FollowersModal from "../components/Profile/FollowersModal";
 import { useAuth } from "../context/AuthContext";
 import { usersApi } from "../api";
 
@@ -33,6 +34,8 @@ function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [followersModalTab, setFollowersModalTab] = useState("followers");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -140,6 +143,24 @@ function ProfilePage() {
       setEditError(err.message || "Failed to update profile");
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleFollowCountChange = ({ username: changedUsername, isFollowing: nowFollowing }) => {
+    if (changedUsername === username.toLowerCase()) {
+      setIsFollowing(nowFollowing);
+      setFollowerCount((prev) => (nowFollowing ? prev + 1 : Math.max(0, prev - 1)));
+    }
+    if (isSelf) {
+      setProfileData((prev) => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          following: nowFollowing
+            ? (prev.stats?.following || 0) + 1
+            : Math.max(0, (prev.stats?.following || 1) - 1),
+        },
+      }));
     }
   };
 
@@ -286,20 +307,42 @@ function ProfilePage() {
                 <span>Public Snippets</span>
               </div>
             </div>
-            <div>
-              <div className="text-lg sm:text-xl font-bold text-white">{followerCount}</div>
-              <div className="text-[11px] text-gray-500 flex items-center justify-center sm:justify-start space-x-1">
-                <FontAwesomeIcon icon={faUsers} className="text-[10px]" />
-                <span>Followers</span>
+            <button
+              type="button"
+              onClick={() => {
+                setFollowersModalTab("followers");
+                setIsFollowersModalOpen(true);
+              }}
+              className="group text-center sm:text-left hover:opacity-90 transition-all focus:outline-none"
+            >
+              <div className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ffa116] transition-colors">
+                {followerCount}
               </div>
-            </div>
-            <div>
-              <div className="text-lg sm:text-xl font-bold text-white">{stats.following || 0}</div>
-              <div className="text-[11px] text-gray-500 flex items-center justify-center sm:justify-start space-x-1">
-                <FontAwesomeIcon icon={faUsers} className="text-[10px]" />
-                <span>Following</span>
+              <div className="text-[11px] text-gray-500 group-hover:text-gray-300 flex items-center justify-center sm:justify-start space-x-1">
+                <FontAwesomeIcon icon={faUsers} className="text-[10px] text-[#ffa116]" />
+                <span className="underline decoration-dotted decoration-gray-600 group-hover:decoration-[#ffa116]">
+                  Followers
+                </span>
               </div>
-            </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFollowersModalTab("following");
+                setIsFollowersModalOpen(true);
+              }}
+              className="group text-center sm:text-left hover:opacity-90 transition-all focus:outline-none"
+            >
+              <div className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ffa116] transition-colors">
+                {stats.following || 0}
+              </div>
+              <div className="text-[11px] text-gray-500 group-hover:text-gray-300 flex items-center justify-center sm:justify-start space-x-1">
+                <FontAwesomeIcon icon={faUsers} className="text-[10px] text-[#ffa116]" />
+                <span className="underline decoration-dotted decoration-gray-600 group-hover:decoration-[#ffa116]">
+                  Following
+                </span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -369,6 +412,15 @@ function ProfilePage() {
       </main>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+
+      <FollowersModal
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        username={username}
+        initialTab={followersModalTab}
+        onFollowCountChange={handleFollowCountChange}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      />
 
       {/* Edit Profile Modal */}
       {isEditModalOpen && (

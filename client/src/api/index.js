@@ -107,6 +107,14 @@ export const usersApi = {
     const res = await apiClient.post(`/users/${username}/follow`);
     return res.data;
   },
+  getFollowers: async (username) => {
+    const res = await apiClient.get(`/users/${username}/followers`);
+    return res.data;
+  },
+  getFollowing: async (username) => {
+    const res = await apiClient.get(`/users/${username}/following`);
+    return res.data;
+  },
   search: async (query) => {
     const res = await apiClient.get("/users/search", { params: { q: query } });
     return res.data;

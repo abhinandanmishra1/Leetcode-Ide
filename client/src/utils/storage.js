@@ -305,27 +305,20 @@ export const deleteProblem = (id) => {
  */
 export const getTemplates = (languageId) => {
   try {
-    const isSeeded = getItemWithFallback(TEMPLATES_SEEDED_KEY);
-    let list = [];
-    if (!isSeeded) {
-      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
-      const existing = raw ? JSON.parse(raw) : [];
-      // Keep any user-created custom templates, purge legacy default seeds
-      const userCustom = existing.filter(
-        (t) =>
-          !t.id?.startsWith("boilerplate_") &&
-          !t.id?.startsWith("binarysearch_") &&
-          !t.id?.startsWith("segtree_") &&
-          !t.id?.startsWith("dsu_") &&
-          !t.id?.startsWith("bitmask_dp_") &&
-          !t.command?.toLowerCase().includes("fib")
-      );
-      list = [...INITIAL_SEEDED_TEMPLATES, ...userCustom];
+    const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
+    const existing = raw ? JSON.parse(raw) : [];
+    // Only return user-created custom templates, purge seeded templates
+    const list = existing.filter(
+      (t) =>
+        !t.id?.startsWith("boilerplate_") &&
+        !t.id?.startsWith("binarysearch_") &&
+        !t.id?.startsWith("segtree_") &&
+        !t.id?.startsWith("dsu_") &&
+        !t.id?.startsWith("bitmask_dp_") &&
+        !t.command?.toLowerCase().includes("fib")
+    );
+    if (list.length !== existing.length) {
       localStorage.setItem(TEMPLATES_KEY, JSON.stringify(list));
-      localStorage.setItem(TEMPLATES_SEEDED_KEY, "true");
-    } else {
-      const raw = getItemWithFallback(TEMPLATES_KEY, LEGACY_TEMPLATES_KEY);
-      list = raw ? JSON.parse(raw) : [];
     }
 
     if (languageId) {

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk, faTimes, faCode, faBolt, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { normalizeId, normalizeCommand, getSavedProblems, findExistingTemplate } from "../../utils/storage";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
 
 export const SaveModal = ({
   isOpen,
@@ -12,16 +13,21 @@ export const SaveModal = ({
   testCases,
   initialName = "",
   initialCommand = "",
+  initialDescription = "",
 }) => {
   const [name, setName] = useState(initialName);
   const [command, setCommand] = useState(initialCommand);
+  const [description, setDescription] = useState(initialDescription);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
       setName(initialName || "");
       setCommand(initialCommand || "");
+      setDescription(initialDescription || "");
+      setShowOverwriteConfirm(false);
     }
-  }, [isOpen, initialName, initialCommand]);
+  }, [isOpen, initialName, initialCommand, initialDescription]);
 
   const normalizedId = useMemo(() => normalizeId(name), [name]);
   const normalizedCmd = useMemo(() => (command.trim() ? normalizeCommand(command) : ""), [command]);
@@ -38,30 +44,30 @@ export const SaveModal = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    if (normalizedCmd && existingTemplate) {
-      const confirmOverride = window.confirm(
-        `A template with command "${normalizedCmd}" already exists for ${currentLanguage?.name || "this language"}.\n\nAre you sure you want to override it?`
-      );
-      if (!confirmOverride) return;
-    }
-
+  const doSave = () => {
     onSave({
       id: normalizedId,
       name: name.trim(),
       command: normalizedCmd || null,
+      description: description.trim(),
       languageId: currentLanguage?.id || 54,
       languageName: currentLanguage?.name || "C++",
       code,
       testCases,
     });
-
-    setName("");
-    setCommand("");
     onClose();
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    if (normalizedCmd && existingTemplate) {
+      setShowOverwriteConfirm(true);
+      return;
+    }
+
+    doSave();
   };
 
   const lineCount = (code || "").split("\n").length;
@@ -145,6 +151,22 @@ export const SaveModal = ({
             )}
           </div>
 
+          {/* Description Field */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-gray-300 font-medium">Description (Optional)</label>
+              <span className="text-gray-500 text-[11px]">{description.length}/250</span>
+            </div>
+            <textarea
+              rows={2}
+              maxLength={250}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description, notes, or time complexity..."
+              className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#3e3e3e] text-white focus:outline-none focus:border-[#ffa116] transition-colors resize-none text-xs placeholder-gray-500"
+            />
+          </div>
+
           {/* Warnings */}
           {isDuplicateProblem && (
             <div className="flex items-center space-x-2 p-2 rounded-lg bg-amber-950/40 border border-amber-800/60 text-amber-300 text-[11px]">
@@ -181,6 +203,20 @@ export const SaveModal = ({
           </div>
         </form>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={showOverwriteConfirm}
+        onClose={() => setShowOverwriteConfirm(false)}
+        onConfirm={() => {
+          setShowOverwriteConfirm(false);
+          doSave();
+        }}
+        title="Overwrite Existing Template"
+        itemName={normalizedCmd}
+        message={`A template with command "${normalizedCmd}" already exists for ${currentLanguage?.name || "this language"}. Overwrite it?`}
+        confirmText="Overwrite"
+        confirmButtonClass="bg-[#ffa116] hover:bg-[#e08d0e] text-black font-semibold"
+      />
     </div>
   );
 };

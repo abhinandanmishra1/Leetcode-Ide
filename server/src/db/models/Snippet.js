@@ -26,6 +26,12 @@ const snippetSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    command: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 50,
+    },
     description: {
       type: String,
       default: '',
@@ -55,6 +61,12 @@ const snippetSchema = new mongoose.Schema(
     forkedFrom: {
       type: String,
       default: null,
+      index: true,
+    },
+    visibility: {
+      type: String,
+      enum: ['unlisted', 'public', 'private'],
+      default: 'unlisted',
       index: true,
     },
     isPublic: {
