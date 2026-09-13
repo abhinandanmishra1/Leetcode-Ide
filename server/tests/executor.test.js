@@ -76,3 +76,31 @@ int main() {
   assert.strictEqual(result.stdout.trim(), 'LeetCode IDE');
   assert.strictEqual(result.exit_code, 0);
 });
+
+test('executor compiles and runs C++ multithreading (vector<thread>)', async () => {
+  const cppThreadCode = `#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    vector<thread> threads;
+    atomic<int> counter(0);
+    for (int i = 0; i < 3; ++i) {
+        threads.emplace_back([&counter]() { counter.fetch_add(1); });
+    }
+    for (auto& t : threads) {
+        if (t.joinable()) t.join();
+    }
+    cout << "Final counter: " << counter.load() << endl;
+    return 0;
+}
+`;
+  const submission = {
+    token: 'test-cpp-threads',
+    source_code: cppThreadCode,
+    language: getLanguageById(54),
+    stdin: '',
+  };
+  const result = await sandbox.execute(submission);
+  assert.strictEqual(result.status.id, 3); // Accepted
+  assert.strictEqual(result.stdout.trim(), 'Final counter: 3');
+  assert.strictEqual(result.exit_code, 0);
+});

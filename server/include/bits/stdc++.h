@@ -16,12 +16,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <cinttypes>
+#include <cstdint>
 
 // Containers
 #include <vector>
 #include <string>
 #include <deque>
 #include <list>
+#include <forward_list>
 #include <set>
 #include <map>
 #include <unordered_set>
@@ -30,6 +33,7 @@
 #include <queue>
 #include <array>
 #include <bitset>
+#include <initializer_list>
 
 // Algorithms & Numerics
 #include <algorithm>
@@ -39,6 +43,7 @@
 #include <utility>
 #include <random>
 #include <complex>
+#include <valarray>
 
 // I/O & Streams
 #include <iostream>
@@ -50,6 +55,14 @@
 #include <istream>
 #include <ostream>
 #include <streambuf>
+
+// Concurrency & Multithreading
+#include <thread>
+#include <mutex>
+#include <shared_mutex>
+#include <condition_variable>
+#include <future>
+#include <atomic>
 
 // Utilities & Modern C++
 #include <chrono>
@@ -66,5 +79,7 @@
 #include <exception>
 #include <stdexcept>
 #include <system_error>
+#include <filesystem>
+#include <charconv>
 
 #endif // _BITS_STDCPP_H
