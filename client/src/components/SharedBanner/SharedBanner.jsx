@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCodeFork, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faCodeFork, faLock, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import UserAvatar from "../common/UserAvatar";
 import Tooltip from "../ui/tooltip";
 
-const SharedBanner = ({ snippet, onFork, isForking }) => {
+const SharedBanner = ({ snippet, onFork, onSaveAsSnippet, isForking }) => {
   if (!snippet) return null;
 
   const author = snippet.author;
@@ -74,6 +74,17 @@ const SharedBanner = ({ snippet, onFork, isForking }) => {
           <FontAwesomeIcon icon={faLock} className="text-[9px]" />
           <span>Read-Only Preview</span>
         </div>
+
+        <Tooltip content="Save this code as your own snippet" side="bottom">
+          <button
+            type="button"
+            onClick={onSaveAsSnippet}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#333333] hover:bg-[#444444] text-gray-200 hover:text-white font-semibold rounded-md border border-[#4a4a4a] shadow transition-all active:scale-95 text-xs"
+          >
+            <FontAwesomeIcon icon={faFloppyDisk} className="text-xs" />
+            <span>Save as Snippet</span>
+          </button>
+        </Tooltip>
 
         <Tooltip content="Clone this code to your editor to modify & run" side="bottom">
           <button

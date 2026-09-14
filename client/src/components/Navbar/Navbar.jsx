@@ -426,14 +426,7 @@ const Navbar = ({
                     <FontAwesomeIcon icon={faUser} className="text-xs text-gray-400" />
                     <span>My Profile</span>
                   </Link>
-                  <Link
-                    to="/explore"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center space-x-2 px-3 py-2 rounded hover:bg-[#2f2f2f] transition-colors text-gray-200 hover:text-white"
-                  >
-                    <FontAwesomeIcon icon={faCompass} className="text-xs text-gray-400" />
-                    <span>Explore Feed</span>
-                  </Link>
+
                   <button
                     type="button"
                     onClick={() => {
