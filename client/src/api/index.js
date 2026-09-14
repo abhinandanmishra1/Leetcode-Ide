@@ -121,12 +121,42 @@ export const usersApi = {
   },
 };
 
+// ==================== LEARNINGS API ====================
+
+export const learningsApi = {
+  getPublic: async (params = {}) => {
+    const res = await apiClient.get("/learnings", { params });
+    return res.data;
+  },
+  getMyLearnings: async (params = {}) => {
+    const res = await apiClient.get("/learnings/me", { params });
+    return res.data;
+  },
+  getById: async (learningId) => {
+    const res = await apiClient.get(`/learnings/${learningId}`);
+    return res.data;
+  },
+  create: async (data) => {
+    const res = await apiClient.post("/learnings", data);
+    return res.data;
+  },
+  update: async (learningId, data) => {
+    const res = await apiClient.put(`/learnings/${learningId}`, data);
+    return res.data;
+  },
+  delete: async (learningId) => {
+    const res = await apiClient.delete(`/learnings/${learningId}`);
+    return res.data;
+  },
+};
+
 const apiService = {
   submitCode,
   checkStatus,
   auth: authApi,
   snippets: snippetsApi,
   users: usersApi,
+  learnings: learningsApi,
 };
 
 export default apiService;

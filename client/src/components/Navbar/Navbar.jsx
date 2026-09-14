@@ -17,6 +17,7 @@ import {
   faRightFromBracket,
   faUser,
   faCode,
+  faBookOpen,
 } from "@fortawesome/free-solid-svg-icons";
 import LanguageDropdown from "../Dropdowns/LanguageDropdown";
 import { CodePadBrand } from "../Brand/CodePadLogo";
@@ -108,6 +109,17 @@ const Navbar = ({
               <span>IDE</span>
             </Link>
           )}
+          <Link
+            to="/learnings"
+            className={`px-2.5 py-1 text-xs rounded-md hover:bg-[#333333] transition-colors flex items-center space-x-1.5 ${
+              location.pathname.startsWith("/learnings")
+                ? "text-[#ffa116] bg-[#333333]"
+                : "text-gray-300 hover:text-white"
+            }`}
+          >
+            <FontAwesomeIcon icon={faBookOpen} className="text-[11px] text-[#00b4d8]" />
+            <span>Learnings</span>
+          </Link>
           <Link
             to="/explore"
             className="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded-md hover:bg-[#333333] transition-colors flex items-center space-x-1.5"

@@ -9,6 +9,7 @@ import {
   faClock,
   faUser,
   faCode,
+  faBookOpen,
 } from "@fortawesome/free-solid-svg-icons";
 import { CodePadBrand } from "../components/Brand/CodePadLogo";
 import { snippetsApi } from "../api";
@@ -70,6 +71,13 @@ function ExplorePage() {
           </div>
 
           <div className="flex items-center space-x-3 flex-shrink-0">
+            <Link
+              to="/learnings"
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-gray-300 hover:text-white bg-[#252525] hover:bg-[#2f2f2f] rounded-lg transition-colors border border-[#383838]"
+            >
+              <FontAwesomeIcon icon={faBookOpen} className="text-[#ffa116] text-[10px]" />
+              <span>Learnings</span>
+            </Link>
             <Link
               to="/ide"
               className="px-3.5 py-1.5 text-xs font-semibold bg-[#2cbb5d] hover:bg-[#26a050] text-white rounded-lg transition-colors shadow"

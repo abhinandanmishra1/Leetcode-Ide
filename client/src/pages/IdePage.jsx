@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import CodeEditor from "../components/CodeEditor/CodeEditor";
 import ConsolePanel from "../components/Console/ConsolePanel";
 import Navbar from "../components/Navbar/Navbar";
@@ -53,6 +53,7 @@ const encodeBase64 = (str) => {
 function IdePage() {
   const { snippetId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const defaultLanguage = LANGUAGES[0]; // C++
@@ -130,6 +131,27 @@ function IdePage() {
         });
     }
   }, [user]);
+
+  // Handle code snippet passed from Learnings ("Run in CodePad")
+  useEffect(() => {
+    if (location.state?.initialCode) {
+      setCode(location.state.initialCode);
+      if (location.state.languageId) {
+        const matched = LANGUAGES.find((l) => l.id === location.state.languageId);
+        if (matched) setLanguage(matched);
+      }
+      setIsReadOnly(false);
+      setCloudSnippet(null);
+      setCurrentProblem({
+        name: "Snippet from Learnings",
+        command: null,
+        description: "Imported from CodePad Learnings",
+        id: "learnings-import-" + Date.now(),
+        isCloud: false,
+      });
+      showToast("Loaded snippet from Learnings into editor", "success");
+    }
+  }, [location.state]);
 
   const saveTimeoutRef = useRef(null);
   const cloudSyncTimeoutRef = useRef(null);
