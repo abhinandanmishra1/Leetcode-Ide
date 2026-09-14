@@ -246,6 +246,9 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
             <a href="#features" className="hover:text-white transition-colors">
               Features
             </a>
+            <Link to="/learnings" className="hover:text-white transition-colors">
+              Learnings
+            </Link>
             <Link to="/explore" className="hover:text-white transition-colors">
               Explore
             </Link>
