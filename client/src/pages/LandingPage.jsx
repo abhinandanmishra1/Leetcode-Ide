@@ -75,64 +75,6 @@ const FEATURE_CARDS = [
   },
 ];
 
-// Fallback snippet data when the API returns fewer than 6 snippets
-const FALLBACK_SNIPPETS = [
-  {
-    id: "fb-1",
-    snippetId: "two-sum",
-    title: "Two Sum",
-    description: "Hash map approach — O(n) time, O(n) space",
-    languageName: "C++",
-    forksCount: 12,
-    author: { username: "alex", name: "Alex" },
-  },
-  {
-    id: "fb-2",
-    snippetId: "lru-cache",
-    title: "LRU Cache",
-    description: "Doubly linked list + hash map for O(1) get/put",
-    languageName: "Python",
-    forksCount: 8,
-    author: { username: "priya", name: "Priya" },
-  },
-  {
-    id: "fb-3",
-    snippetId: "dijkstra",
-    title: "Dijkstra's Shortest Path",
-    description: "Priority-queue implementation for weighted graphs",
-    languageName: "Java",
-    forksCount: 5,
-    author: { username: "marco", name: "Marco" },
-  },
-  {
-    id: "fb-4",
-    snippetId: "binary-search",
-    title: "Binary Search",
-    description: "Iterative lower-bound search on sorted arrays",
-    languageName: "Rust",
-    forksCount: 3,
-    author: { username: "sana", name: "Sana" },
-  },
-  {
-    id: "fb-5",
-    snippetId: "merge-sort",
-    title: "Merge Sort",
-    description: "Recursive divide-and-conquer, stable O(n log n)",
-    languageName: "Go",
-    forksCount: 6,
-    author: { username: "lee", name: "Lee" },
-  },
-  {
-    id: "fb-6",
-    snippetId: "valid-parentheses",
-    title: "Valid Parentheses",
-    description: "Stack-based bracket matching",
-    languageName: "JavaScript",
-    forksCount: 4,
-    author: { username: "nina", name: "Nina" },
-  },
-];
-
 function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -155,20 +97,16 @@ function LandingPage() {
       .catch(() => {});
   }, []);
 
-  // Load trending public snippets, fall back to placeholder data
+  // Load trending public snippets
   useEffect(() => {
     snippetsApi
       .getPublic({ limit: 6, sort: "popular" })
       .then((res) => {
         if (res.snippets && res.snippets.length > 0) {
           setTrendingSnippets(res.snippets);
-        } else {
-          setTrendingSnippets(FALLBACK_SNIPPETS);
         }
       })
-      .catch(() => {
-        setTrendingSnippets(FALLBACK_SNIPPETS);
-      });
+      .catch(() => {});
   }, []);
 
   const demoCodes = {
@@ -292,9 +230,6 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
     saveCode(target.id, demoCodes[demoCodeLang]);
     navigate("/ide");
   };
-
-  // Choose how many snippet cards to show (max 6, responsive grid)
-  const displayedSnippets = trendingSnippets.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#141414] text-gray-200 selection:bg-[#ffa116] selection:text-black">
@@ -590,7 +525,8 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
       </section>
 
       {/* ─── Community Snippets ─── */}
-      <section className="py-20 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 border-t border-[#222222]">
+      {trendingSnippets.length > 0 && (
+        <section className="py-20 px-4 sm:px-8 max-w-7xl mx-auto space-y-8 border-t border-[#222222]">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">See how others solve it</h2>
@@ -605,7 +541,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {displayedSnippets.map((s) => (
+          {trendingSnippets.map((s) => (
             <div
               key={s.id}
               onClick={() => navigate(`/s/${s.snippetId}`)}
@@ -643,6 +579,7 @@ console.log(\`Indices: [\${res.join(", ")}]\`);`,
           ))}
         </div>
       </section>
+      )}
 
       {/* ─── Open Source Section ─── */}
       <section className="py-24 px-4 sm:px-8 text-center bg-gradient-to-b from-[#141414] to-[#1c1c1c] border-t border-[#262626]">

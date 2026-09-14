@@ -424,6 +424,11 @@ function IdePage() {
 
   // Save to MongoDB Cloud
   const handleSaveToCloud = async () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      showToast("Please sign in to save code to the cloud.", "info");
+      return;
+    }
     try {
       const payload = {
         title: cloudSnippet?.title || `${language.name} Solution`,
@@ -455,6 +460,11 @@ function IdePage() {
   // Fork shared snippet
   const handleForkSnippet = async () => {
     if (!cloudSnippet) return;
+    if (!user) {
+      setIsAuthModalOpen(true);
+      showToast("Please sign in to fork this snippet.", "info");
+      return;
+    }
     setIsForking(true);
     try {
       const forked = await snippetsApi.fork(cloudSnippet.snippetId);
@@ -484,8 +494,23 @@ function IdePage() {
     }
   };
 
+  // Save current viewed snippet as user's own new snippet
+  const handleSaveAsSnippet = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      showToast("Please sign in to save this as your snippet.", "info");
+      return;
+    }
+    setIsSaveModalOpen(true);
+  };
+
   // Open Share modal
   const handleOpenShare = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      showToast("Please sign in to share your code.", "info");
+      return;
+    }
     if (!cloudSnippet) {
       // Auto-save to cloud first to get a permanent URL
       handleSaveToCloud().then(() => {
@@ -706,6 +731,7 @@ function IdePage() {
         <SharedBanner
           snippet={cloudSnippet}
           onFork={handleForkSnippet}
+          onSaveAsSnippet={handleSaveAsSnippet}
           isForking={isForking}
         />
       )}
