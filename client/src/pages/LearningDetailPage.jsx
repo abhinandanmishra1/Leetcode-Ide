@@ -22,6 +22,7 @@ import UserAvatar from "../components/common/UserAvatar";
 import DeleteConfirmModal from "../components/common/DeleteConfirmModal";
 import { learningsApi } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -43,6 +44,7 @@ export default function LearningDetailPage() {
   const { learningId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [learning, setLearning] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,6 +73,7 @@ export default function LearningDetailPage() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
+    toast.success("Link copied to clipboard");
     setTimeout(() => setCopied(false), 1800);
   };
 
@@ -78,10 +81,16 @@ export default function LearningDetailPage() {
     setIsDeleting(true);
     try {
       await learningsApi.delete(learningId);
+      toast.success("Learning note deleted");
       navigate("/learnings?tab=mine", { replace: true });
     } catch (err) {
-      alert("Failed to delete note: " + (err.response?.data?.message || err.message));
-      setIsDeleting(false);
+      if (err.response?.status === 404) {
+        toast.info("This note was already removed.");
+        navigate("/learnings?tab=mine", { replace: true });
+      } else {
+        toast.error("Failed to delete note: " + (err.response?.data?.message || err.message));
+        setIsDeleting(false);
+      }
     }
   };
 

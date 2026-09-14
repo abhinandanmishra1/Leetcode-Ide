@@ -27,12 +27,14 @@ import TemplatePickerModal from "../components/Learnings/TemplatePickerModal";
 import { LEARNING_TEMPLATES } from "../constants/learningTemplates";
 import { learningsApi } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function LearningEditorPage() {
   const { learningId } = useParams();
   const isEditing = Boolean(learningId);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -64,7 +66,7 @@ export default function LearningEditorPage() {
       .getById(learningId)
       .then((data) => {
         if (!data.isAuthor) {
-          alert("You do not have permission to edit this learning note.");
+          toast.warning("You do not have permission to edit this learning note.");
           navigate(`/learnings/${learningId}`, { replace: true });
           return;
         }
@@ -75,7 +77,7 @@ export default function LearningEditorPage() {
         setVisibility(data.visibility || "private");
       })
       .catch((err) => {
-        alert("Failed to load note: " + (err.response?.data?.message || err.message));
+        toast.error("Failed to load note: " + (err.response?.data?.message || err.message));
         navigate("/learnings", { replace: true });
       })
       .finally(() => setLoading(false));
@@ -167,9 +169,11 @@ export default function LearningEditorPage() {
     try {
       if (isEditing) {
         await learningsApi.update(learningId, payload);
+        toast.success("Learning note updated");
         navigate(`/learnings/${learningId}`);
       } else {
         const created = await learningsApi.create(payload);
+        toast.success("Learning note created");
         navigate(`/learnings/${created.learningId}`);
       }
     } catch (err) {

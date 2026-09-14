@@ -22,11 +22,13 @@ import AuthModal from "../components/Auth/AuthModal";
 import UserAvatar from "../components/common/UserAvatar";
 import { learningsApi } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function LearningsHubPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const toast = useToast();
 
   // Active Tab: "mine" or "explore"
   const activeTab = searchParams.get("tab") || (user ? "mine" : "explore");
@@ -132,9 +134,16 @@ export default function LearningsHubPage() {
       await learningsApi.delete(noteToDelete.learningId);
       setLearnings((prev) => prev.filter((item) => item.learningId !== noteToDelete.learningId));
       setNoteToDelete(null);
+      toast.success("Learning note deleted");
       loadData();
     } catch (err) {
-      alert("Failed to delete note: " + (err.response?.data?.message || err.message));
+      if (err.response?.status === 404) {
+        setLearnings((prev) => prev.filter((item) => item.learningId !== noteToDelete.learningId));
+        setNoteToDelete(null);
+        toast.info("This note was already removed.");
+      } else {
+        toast.error("Failed to delete note: " + (err.response?.data?.message || err.message));
+      }
     } finally {
       setIsDeleting(false);
     }
